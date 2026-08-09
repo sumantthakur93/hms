@@ -129,3 +129,13 @@ _Avoid_: API guard, data guard
 **Ownership**:
 The rule that a user can only access resources they are linked to. A Doctor owns Consultations they created and Patients they have Appointments with. A Patient owns their own records. Enforced by including the user's profileId or patientId in every query's WHERE clause.
 _Avoid_: Data scoping, row-level access
+
+### AI Chatbot
+
+**Chatbot Tool**:
+A function the AI chatbot can invoke on behalf of the user. 21 tools across 7 domains (Scheduling, Patient, Clinical, Pharmacy, Billing, Lab, System). Tools are filtered per Role via `prepareStep` — each role sees only its permitted tools. Read tools execute immediately; write tools (book, cancel, reschedule, register patient, update patient) require user confirmation via `toolApproval`. Clinical write operations (consultations, prescriptions, lab results, dispensing) are excluded — those belong in the application UI.
+_Avoid_: Function, action, command
+
+**Deep Link**:
+A clickable link to a specific application page, included in a chatbot response when a task is better handled in the UI. Tool responses include a `link` field when applicable. Used for: clinical write actions, complex forms, detailed views (patient timeline, inventory, invoice adjustment). Bridges the chatbot experience to the full application UX.
+_Avoid_: Redirect, navigation link
