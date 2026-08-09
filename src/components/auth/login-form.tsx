@@ -45,9 +45,16 @@ export function LoginForm() {
       }
 
       // Hard redirect so middleware runs with the new session cookie
-      // If callbackUrl is set, use it; otherwise go to / which middleware
-      // will redirect to the user's role dashboard
-      window.location.href = callbackUrl ?? "/";
+      // If callbackUrl is set and is a same-origin relative path, use it;
+      // otherwise go to / which middleware will redirect to the role dashboard.
+      // Reject absolute URLs to prevent open redirect / phishing attacks.
+      const safeUrl =
+        callbackUrl &&
+        callbackUrl.startsWith("/") &&
+        !callbackUrl.startsWith("//")
+          ? callbackUrl
+          : "/";
+      window.location.href = safeUrl;
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
