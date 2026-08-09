@@ -4,7 +4,16 @@
       "Exec(git remote)",
       "Exec(mkdir)",
       "Exec(gh auth)",
-      "Exec(git init)"
+      "Exec(git init)",
+      "Exec(gh repo)",
+      "Exec(git push)",
+      "Exec(gh issue)",
+      "Exec(gh label)",
+      "Exec(cat)",
+      "Exec(sed)",
+      "Exec(head)",
+      "Exec(cp)",
+      "Exec(git checkout)"
     ]
   }
 }
