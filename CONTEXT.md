@@ -33,15 +33,27 @@ _Avoid_: Specialty, ward, unit
 ### Scheduling
 
 **Appointment**:
-A reserved time slot linking a Patient to a Doctor on a specific date and time. Represents the scheduling act, not the clinical encounter. Auto-confirmed on booking (no approval step). States: CONFIRMED → CHECKED_IN → IN_CONSULTATION → COMPLETED. May also reach CANCELLED (before check-in) or NO_SHOW.
+A reserved time slot linking a Patient to a Doctor on a specific date and time. Represents the scheduling act, not the clinical encounter. Auto-confirmed on booking (no approval step). States: CONFIRMED → CHECKED_IN → IN_CONSULTATION → COMPLETED. May also reach CANCELLED (before check-in) or NO_SHOW. Can be rescheduled while CONFIRMED (updates date/time, records original time for audit). Double-booking prevented by unique constraint on (doctorId, date, startTime).
 _Avoid_: Booking, visit, slot (when referring to the booked entity)
 
+**Reschedule**:
+Changing an Appointment's date and/or time to a different available Slot. The Appointment keeps its identity — no cancel-and-rebook. Only allowed while status is CONFIRMED (before check-in). Records the original date/time for audit trail. Frees the old Slot and occupies the new one. Can be performed by Patient (own), Receptionist (any), or Admin.
+_Avoid_: Move, shift
+
 **Schedule**:
-A Doctor's availability pattern defined by Admin, consisting of time blocks (e.g., Monday 9:00–13:00) with a fixed slot duration (e.g., 15 minutes). The system generates available Slots from the Schedule. Includes a blocked-dates list for leaves and holidays — slot generation skips blocked dates.
+A Doctor's availability pattern defined by Admin, consisting of one or more Schedule Blocks per day-of-week. The system computes available Slots on-the-fly from the Schedule — no Slot table in the database.
 _Avoid_: Timetable, roster, calendar
 
+**Schedule Block**:
+A single time range within a Doctor's Schedule for a specific day of the week: dayOfWeek, startTime, endTime, slotDuration (in minutes). Multiple blocks per day are allowed (e.g., morning 09:00–13:00 + afternoon 14:00–17:00). Admin creates and manages these.
+_Avoid_: Time block, availability block
+
+**Blocked Date**:
+A specific date on which a Doctor is unavailable (leave, holiday, emergency). Managed by Admin. Slot generation returns empty for blocked dates. Stores doctorId, date, and optional reason.
+_Avoid_: Leave, off-day, holiday (use Blocked Date as the system term)
+
 **Slot**:
-A single bookable time window generated from a Doctor's Schedule. Fixed duration. A Slot is either available or occupied by an Appointment.
+A single bookable time window computed on-the-fly from a Doctor's Schedule Blocks. Not stored in the database. Fixed duration determined by the Schedule Block's slotDuration. A Slot is either available (no Appointment exists at that time) or occupied.
 _Avoid_: Time slot (use just "Slot"), window
 
 ### Clinical
