@@ -15,12 +15,18 @@ function requireAdmin(session: { user: { role: UserRole } } | null) {
 
 // ─── Schemas ───────────────────────────────────────────────────────────────────
 
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const scheduleBlockSchema = z
   .object({
     doctorId: z.string().min(1, "Doctor is required"),
     dayOfWeek: z.number().int().min(0).max(6, "Day must be 0–6"),
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be HH:mm"),
-    endTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be HH:mm"),
+    startTime: z
+      .string()
+      .regex(TIME_REGEX, "Start time must be HH:mm (00-23:00-59)"),
+    endTime: z
+      .string()
+      .regex(TIME_REGEX, "End time must be HH:mm (00-23:00-59)"),
     slotDuration: z
       .number()
       .int()

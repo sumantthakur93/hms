@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { hashPassword } from "@/lib/password";
 import { z } from "zod";
 import type { UserRole } from "@/types/next-auth";
@@ -67,42 +68,61 @@ export async function signupPatient(input: SignupInput) {
     orderBy: { mrn: "desc" },
     select: { mrn: true },
   });
-  const nextMrnNum = lastPatient
+  const baseMrnNum = lastPatient
     ? parseInt(lastPatient.mrn.replace("MRN-", ""), 10) + 1
     : 1;
-  const mrn = `MRN-${String(nextMrnNum).padStart(5, "0")}`;
 
   // Hash password
   const hashedPassword = await hashPassword(data.password);
 
-  // Create User + Patient in a transaction
-  const user = await prisma.user.create({
-    data: {
-      email: data.email,
-      name: `${data.firstName} ${data.lastName}`,
-      password: hashedPassword,
-      role: "PATIENT" as UserRole,
-      patient: {
-        create: {
-          mrn,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone,
+  // Create User + Patient. On MRN unique constraint collision
+  // (concurrent signups generating the same MRN), retry with an
+  // incremented MRN before giving up.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const mrn = `MRN-${String(baseMrnNum + attempt).padStart(5, "0")}`;
+    try {
+      const user = await prisma.user.create({
+        data: {
           email: data.email,
-          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-          gender: data.gender,
-          bloodGroup: data.bloodGroup || null,
-          address: data.address || null,
-          emergencyName: data.emergencyName || null,
-          emergencyPhone: data.emergencyPhone || null,
-          emergencyRelation: data.emergencyRelation || null,
-          allergies: data.allergies || null,
-          medicalHistory: data.medicalHistory || null,
+          name: `${data.firstName} ${data.lastName}`,
+          password: hashedPassword,
+          role: "PATIENT" as UserRole,
+          patient: {
+            create: {
+              mrn,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              phone: data.phone,
+              email: data.email,
+              dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+              gender: data.gender,
+              bloodGroup: data.bloodGroup || null,
+              address: data.address || null,
+              emergencyName: data.emergencyName || null,
+              emergencyPhone: data.emergencyPhone || null,
+              emergencyRelation: data.emergencyRelation || null,
+              allergies: data.allergies || null,
+              medicalHistory: data.medicalHistory || null,
+            },
+          },
         },
-      },
-    },
-    include: { patient: true },
-  });
+        include: { patient: true },
+      });
 
-  return { ok: true as const, userId: user.id, mrn };
+      return { ok: true as const, userId: user.id, mrn };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        continue; // retry with next MRN
+      }
+      throw error; // re-throw non-constraint errors
+    }
+  }
+
+  return {
+    ok: false as const,
+    error: "Registration failed due to a system conflict. Please try again.",
+  };
 }

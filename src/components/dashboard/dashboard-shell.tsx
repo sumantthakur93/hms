@@ -94,7 +94,7 @@ export function DashboardShell({
   const moreItems = navItems.slice(4);
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
@@ -126,10 +126,7 @@ export function DashboardShell({
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                 )}
               >
-                <Icon
-                  className="size-4 shrink-0"
-                 
-                />
+                <Icon className="size-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -156,7 +153,7 @@ export function DashboardShell({
       </aside>
 
       {/* Main */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b border-border bg-card px-4 md:px-6">
           {/* Sidebar toggle (desktop) */}
@@ -285,10 +282,7 @@ export function DashboardShell({
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                     )}
                   >
-                    <Icon
-                      className="size-4 shrink-0"
-                     
-                    />
+                    <Icon className="size-4 shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -364,10 +358,7 @@ export function DashboardShell({
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <Icon
-                      className="size-4 shrink-0"
-                     
-                    />
+                    <Icon className="size-4 shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );

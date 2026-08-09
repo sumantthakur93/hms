@@ -468,6 +468,14 @@ async function main() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Delete any existing seeded appointments for today to make re-seed idempotent.
+  // (Appointments use a rolling "today" date, so upsert can't use a fixed key.)
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  await prisma.appointment.deleteMany({
+    where: { date: { gte: today, lt: tomorrow } },
+  });
+
   // Appointment 1 — CONFIRMED (Patient 1 with Dr. Rajesh Mehta / Cardiology)
   const appt1 = await prisma.appointment.create({
     data: {

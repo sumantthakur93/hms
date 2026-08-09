@@ -1,13 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { z } from "zod";
 import type { UserRole } from "@/types/next-auth";
 
 // ─── Authorization ─────────────────────────────────────────────────────────────
 
-function requireRole(session: { user: { role: UserRole } } | null, ...roles: UserRole[]) {
+function requireRole(
+  session: { user: { role: UserRole } } | null,
+  ...roles: UserRole[]
+) {
   if (!session?.user?.role || !roles.includes(session.user.role)) {
     throw new Error("Unauthorized");
   }
@@ -38,15 +42,14 @@ const updateSchema = patientSchema.partial().omit({ phone: true });
 
 // ─── MRN generation ────────────────────────────────────────────────────────────
 
-async function generateMrn(): Promise<string> {
+async function generateMrnNum(): Promise<number> {
   const lastPatient = await prisma.patient.findFirst({
     orderBy: { mrn: "desc" },
     select: { mrn: true },
   });
-  const nextNum = lastPatient
+  return lastPatient
     ? parseInt(lastPatient.mrn.replace("MRN-", ""), 10) + 1
     : 1;
-  return `MRN-${String(nextNum).padStart(5, "0")}`;
 }
 
 // ─── Server Actions ────────────────────────────────────────────────────────────
@@ -68,29 +71,50 @@ export async function createPatient(input: PatientInput) {
   }
 
   const data = parsed.data;
-  const mrn = await generateMrn();
+  const baseMrnNum = await generateMrnNum();
 
-  const patient = await prisma.patient.create({
-    data: {
-      mrn,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      email: data.email || null,
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-      gender: data.gender || null,
-      bloodGroup: data.bloodGroup || null,
-      address: data.address || null,
-      emergencyName: data.emergencyName || null,
-      emergencyPhone: data.emergencyPhone || null,
-      emergencyRelation: data.emergencyRelation || null,
-      allergies: data.allergies || null,
-      medicalHistory: data.medicalHistory || null,
-    },
-    select: { id: true, mrn: true, firstName: true, lastName: true },
-  });
+  const patientData = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    email: data.email || null,
+    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+    gender: data.gender || null,
+    bloodGroup: data.bloodGroup || null,
+    address: data.address || null,
+    emergencyName: data.emergencyName || null,
+    emergencyPhone: data.emergencyPhone || null,
+    emergencyRelation: data.emergencyRelation || null,
+    allergies: data.allergies || null,
+    medicalHistory: data.medicalHistory || null,
+  };
 
-  return { ok: true as const, patient };
+  // Try creating with the generated MRN. On unique constraint collision
+  // (concurrent registrations generating the same MRN), retry with an
+  // incremented MRN before giving up.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const mrn = `MRN-${String(baseMrnNum + attempt).padStart(5, "0")}`;
+    try {
+      const patient = await prisma.patient.create({
+        data: { mrn, ...patientData },
+        select: { id: true, mrn: true, firstName: true, lastName: true },
+      });
+      return { ok: true as const, patient };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        continue; // retry with next MRN
+      }
+      throw error; // re-throw non-constraint errors
+    }
+  }
+
+  return {
+    ok: false as const,
+    error: "Registration failed due to a system conflict. Please try again.",
+  };
 }
 
 /**
@@ -194,13 +218,25 @@ export async function updatePatient(
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
       }),
       ...(data.gender !== undefined && { gender: data.gender || null }),
-      ...(data.bloodGroup !== undefined && { bloodGroup: data.bloodGroup || null }),
+      ...(data.bloodGroup !== undefined && {
+        bloodGroup: data.bloodGroup || null,
+      }),
       ...(data.address !== undefined && { address: data.address || null }),
-      ...(data.emergencyName !== undefined && { emergencyName: data.emergencyName || null }),
-      ...(data.emergencyPhone !== undefined && { emergencyPhone: data.emergencyPhone || null }),
-      ...(data.emergencyRelation !== undefined && { emergencyRelation: data.emergencyRelation || null }),
-      ...(data.allergies !== undefined && { allergies: data.allergies || null }),
-      ...(data.medicalHistory !== undefined && { medicalHistory: data.medicalHistory || null }),
+      ...(data.emergencyName !== undefined && {
+        emergencyName: data.emergencyName || null,
+      }),
+      ...(data.emergencyPhone !== undefined && {
+        emergencyPhone: data.emergencyPhone || null,
+      }),
+      ...(data.emergencyRelation !== undefined && {
+        emergencyRelation: data.emergencyRelation || null,
+      }),
+      ...(data.allergies !== undefined && {
+        allergies: data.allergies || null,
+      }),
+      ...(data.medicalHistory !== undefined && {
+        medicalHistory: data.medicalHistory || null,
+      }),
     },
     select: { id: true, mrn: true, firstName: true, lastName: true },
   });

@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { z } from "zod";
 import type { UserRole } from "@/types/next-auth";
@@ -19,11 +20,15 @@ function requireRole(
 
 // ─── Schemas ───────────────────────────────────────────────────────────────────
 
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const bookAppointmentSchema = z.object({
   doctorId: z.string().min(1, "Doctor is required"),
   date: z.string().min(1, "Date is required"),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be HH:mm"),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be HH:mm"),
+  startTime: z
+    .string()
+    .regex(TIME_REGEX, "Start time must be HH:mm (00-23:00-59)"),
+  endTime: z.string().regex(TIME_REGEX, "End time must be HH:mm (00-23:00-59)"),
   reason: z.string().optional(),
   patientId: z.string().optional(), // receptionist books on behalf
 });
@@ -33,8 +38,12 @@ export type BookAppointmentInput = z.infer<typeof bookAppointmentSchema>;
 const rescheduleSchema = z.object({
   appointmentId: z.string().min(1, "Appointment ID is required"),
   newDate: z.string().min(1, "New date is required"),
-  newStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be HH:mm"),
-  newEndTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be HH:mm"),
+  newStartTime: z
+    .string()
+    .regex(TIME_REGEX, "Start time must be HH:mm (00-23:00-59)"),
+  newEndTime: z
+    .string()
+    .regex(TIME_REGEX, "End time must be HH:mm (00-23:00-59)"),
 });
 
 export type RescheduleInput = z.infer<typeof rescheduleSchema>;
@@ -601,23 +610,43 @@ export async function walkInRegistration(input: WalkInInput) {
   const nextNum = lastPatient
     ? parseInt(lastPatient.mrn.replace("MRN-", ""), 10) + 1
     : 1;
-  const mrn = `MRN-${String(nextNum).padStart(5, "0")}`;
 
-  const patient = await prisma.patient.create({
-    data: {
-      mrn,
-      firstName: parsed.data.firstName,
-      lastName: parsed.data.lastName,
-      phone: parsed.data.phone,
-    },
-    select: {
-      id: true,
-      mrn: true,
-      firstName: true,
-      lastName: true,
-      phone: true,
-    },
-  });
+  const patientData = {
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    phone: parsed.data.phone,
+  };
 
-  return { ok: true as const, patient };
+  // Try creating with the generated MRN. On unique constraint collision
+  // (concurrent registrations generating the same MRN), retry with an
+  // incremented MRN before giving up.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const mrn = `MRN-${String(nextNum + attempt).padStart(5, "0")}`;
+    try {
+      const patient = await prisma.patient.create({
+        data: { mrn, ...patientData },
+        select: {
+          id: true,
+          mrn: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+        },
+      });
+      return { ok: true as const, patient };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        continue; // retry with next MRN
+      }
+      throw error; // re-throw non-constraint errors
+    }
+  }
+
+  return {
+    ok: false as const,
+    error: "Registration failed due to a system conflict. Please try again.",
+  };
 }
