@@ -23,6 +23,7 @@ import {
   SelectItem,
   SelectContent,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Status =
   | "idle"
@@ -275,10 +276,10 @@ export function PatientRegistrationForm({
               />
             </Field>
             <Field label="Date of birth">
-              <Input
-                type="date"
+              <DatePicker
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={setDateOfBirth}
+                placeholder="Pick a date"
               />
             </Field>
           </div>

@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Save,
-  Loader2,
-  AlertCircle,
-  Lock,
-} from "@/components/ui/icon";
+import { Save, Loader2, AlertCircle, Lock, Phone } from "@/components/ui/icon";
 import { updatePatient } from "@/actions/patients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +14,7 @@ import {
   SelectItem,
   SelectContent,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Patient = {
   id: string;
@@ -125,7 +121,7 @@ export function PatientEditForm({
       <div className="space-y-1.5">
         <Label>Phone</Label>
         <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2">
-          <Lock className="size-3.5 text-muted-foreground" />
+          <Phone className="size-3.5 text-muted-foreground" />
           <span className="text-sm text-foreground">{patient.phone}</span>
         </div>
       </div>
@@ -171,10 +167,10 @@ export function PatientEditForm({
         </div>
         <div className="space-y-1.5">
           <Label>Date of birth</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
+            onChange={setDateOfBirth}
+            placeholder="Pick a date"
           />
         </div>
       </div>

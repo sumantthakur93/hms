@@ -57,8 +57,8 @@ export function LoginForm() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-primary-foreground">
+        <CardHeader className="items-center text-center justify-items-center">
+          <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-primary-foreground justify-self-center">
             C
           </div>
           <CardTitle className="text-xl">CarePoint Hospital</CardTitle>

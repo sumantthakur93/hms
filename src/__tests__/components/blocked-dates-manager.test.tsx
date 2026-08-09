@@ -6,6 +6,26 @@ vi.mock("@/actions/schedule", () => ({
   removeBlockedDate: vi.fn(),
 }));
 
+vi.mock("@/components/ui/date-picker", () => ({
+  DatePicker: ({
+    value,
+    onChange,
+    id,
+  }: {
+    value?: string;
+    onChange?: (v: string) => void;
+    id?: string;
+  }) => (
+    <input
+      type="date"
+      id={id}
+      value={value ?? ""}
+      onChange={(e) => onChange?.(e.target.value)}
+      aria-label="Date"
+    />
+  ),
+}));
+
 import { BlockedDatesManager } from "@/components/admin/blocked-dates-manager";
 import { addBlockedDate, removeBlockedDate } from "@/actions/schedule";
 

@@ -13,6 +13,7 @@ import { addBlockedDate, removeBlockedDate } from "@/actions/schedule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type BlockedDate = {
   id: string;
@@ -175,11 +176,10 @@ function BlockedDateForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="blocked-date">Date</Label>
-        <Input
+        <DatePicker
           id="blocked-date"
-          type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={setDate}
           required
         />
       </div>

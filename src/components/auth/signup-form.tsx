@@ -33,6 +33,7 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function SignupForm() {
   const router = useRouter();
@@ -373,10 +374,10 @@ export function SignupForm() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Date of birth</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={dateOfBirth}
-                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      onChange={setDateOfBirth}
+                      placeholder="Pick a date"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -525,7 +526,9 @@ export function SignupForm() {
               <ShieldCheck className="size-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Secure & Private</h3>
+              <h3 className="font-semibold text-foreground">
+                Secure & Private
+              </h3>
               <p className="text-sm text-muted-foreground">
                 Your medical records are encrypted and role-access controlled.
               </p>
