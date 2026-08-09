@@ -73,7 +73,7 @@ _Avoid_: Prescription line, medicine entry
 ### Lab
 
 **Lab Test Order**:
-A recommendation for a laboratory test, created by a Doctor during or outside a Consultation. Specifies the test type, patient, priority (Normal/Urgent), and instructions. Carries an isInternal flag: when true, the order flows to the hospital's Lab Technician queue and progresses through states (ORDERED → SAMPLE_COLLECTED → PROCESSING → COMPLETED, or CANCELLED before sample collection). When false, it is an external recommendation — recorded for the Patient's medical history but not tracked through internal lab states.
+A recommendation for a laboratory test, created by a Doctor during or outside a Consultation. Specifies the test type, patient, priority (Normal/Urgent), and instructions. Initially all orders are recommendations. The Receptionist sets the isInternal flag based on whether the patient wants the test done at this hospital. When isInternal is true, the order flows to the hospital's Lab Technician queue and progresses through states (ORDERED → SAMPLE_COLLECTED → PROCESSING → COMPLETED, or CANCELLED before sample collection). When false, it is an external recommendation — recorded for the Patient's medical history but not tracked through internal lab states.
 _Avoid_: Test request, lab request
 
 **Lab Result**:
@@ -101,11 +101,11 @@ _Avoid_: Reorder alert, stock warning
 ### Billing
 
 **Invoice**:
-A request for payment issued to a Patient after services are rendered. Auto-generated as DRAFT when a Consultation completes, pulling in consultation fee, lab test charges, and dispensed medicines. States: DRAFT → ISSUED → PAID. May also reach CANCELLED. Receptionist reviews, adjusts, issues, and records payment.
+A request for payment created by the Receptionist after post-consultation processing is complete (dispensing, internal lab test selection). NOT auto-generated — the Receptionist initiates it by clicking "Generate Invoice." Created as DRAFT with line items: consultation fee (from Department), internal lab test charges (Test Type price), and dispensed medicine charges (quantity x unit price). External lab tests are never billed. States: DRAFT → ISSUED → PAID. May also reach CANCELLED. No partial payments — full amount or adjusted with a discount line. Sequential invoice number (INV-{year}-{5-digit sequence}). Printable as PDF with hospital letterhead. Payment recorded with method (Cash, UPI, Card, Bank Transfer) and optional transaction reference.
 _Avoid_: Bill, receipt (a receipt is proof of payment, not the request)
 
 **Invoice Item**:
-A single line on an Invoice: a consultation fee, a lab test charge, or a dispensed medicine with quantity and price.
+A single line on an Invoice: a consultation fee, an internal lab test charge, a dispensed medicine charge, or a discount (negative amount with reason). Only discounts can be added while DRAFT.
 _Avoid_: Line item, charge
 
 **Dispensing**:
