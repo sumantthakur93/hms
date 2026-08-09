@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarClock,
   Loader2,
@@ -45,6 +46,7 @@ export function AppointmentList({
 }: {
   appointments: Appointment[];
 }) {
+  const router = useRouter();
   const [appointments, setAppointments] = useState(initial);
   const [rescheduling, setRescheduling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,9 +64,10 @@ export function AppointmentList({
     });
   }
 
-  function onRescheduled(id: string) {
+  function onRescheduled() {
     setRescheduling(null);
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
+    // Refresh server data to get the new appointment with updated date/time
+    router.refresh();
   }
 
   if (appointments.length === 0) {
@@ -94,7 +97,7 @@ export function AppointmentList({
               key={apt.id}
               appointment={apt}
               onCancel={() => setRescheduling(null)}
-              onDone={() => onRescheduled(apt.id)}
+              onDone={() => onRescheduled()}
             />
           );
         }
