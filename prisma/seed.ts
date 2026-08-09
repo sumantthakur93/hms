@@ -470,11 +470,40 @@ async function main() {
 
   // Delete any existing seeded appointments for today to make re-seed idempotent.
   // (Appointments use a rolling "today" date, so upsert can't use a fixed key.)
+  // Must delete dependents first: prescription items → prescriptions → lab test
+  // orders → consultations → appointments.
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  await prisma.appointment.deleteMany({
+  const todayApptIds = await prisma.appointment.findMany({
     where: { date: { gte: today, lt: tomorrow } },
+    select: { id: true },
   });
+  if (todayApptIds.length > 0) {
+    const apptIds = todayApptIds.map((a) => a.id);
+    // Delete prescription items → prescriptions for consultations linked to these appointments
+    const consultationIds = await prisma.consultation.findMany({
+      where: { appointmentId: { in: apptIds } },
+      select: { id: true },
+    });
+    if (consultationIds.length > 0) {
+      const consIds = consultationIds.map((c) => c.id);
+      await prisma.prescriptionItem.deleteMany({
+        where: { prescription: { consultationId: { in: consIds } } },
+      });
+      await prisma.prescription.deleteMany({
+        where: { consultationId: { in: consIds } },
+      });
+      await prisma.labTestOrder.deleteMany({
+        where: { consultationId: { in: consIds } },
+      });
+      await prisma.consultation.deleteMany({
+        where: { id: { in: consIds } },
+      });
+    }
+    await prisma.appointment.deleteMany({
+      where: { id: { in: apptIds } },
+    });
+  }
 
   // Appointment 1 — CONFIRMED (Patient 1 with Dr. Rajesh Mehta / Cardiology)
   const appt1 = await prisma.appointment.create({
