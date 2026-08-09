@@ -3,7 +3,7 @@ import type { DefaultSession } from "next-auth";
 // We use string literals here instead of importing UserRole from
 // @prisma/client so the type file can be resolved without Prisma
 // (edge runtime compatibility for middleware).
-type UserRole =
+export type UserRole =
   | "ADMIN"
   | "DOCTOR"
   | "PATIENT"

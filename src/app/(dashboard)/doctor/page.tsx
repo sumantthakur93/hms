@@ -1,8 +1,10 @@
 export default function DoctorDashboard() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
-      <p className="mt-2 text-sm text-gray-500">Dashboard widgets placeholder</p>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-slate-100">Doctor Dashboard</h1>
+      <p className="text-sm text-slate-400">
+        Dashboard widgets — to be built in a downstream ticket.
+      </p>
     </div>
   );
 }
