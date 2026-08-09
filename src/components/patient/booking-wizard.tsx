@@ -48,7 +48,11 @@ type Doctor = {
 
 const STEPS = ["Department", "Doctor", "Date & Slot", "Confirm"] as const;
 
-export function BookingWizard() {
+export function BookingWizard({
+  receptionistPatientId,
+}: {
+  receptionistPatientId?: string;
+} = {}) {
   const [step, setStep] = useState(0);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -142,6 +146,7 @@ export function BookingWizard() {
         date: iso,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
+        patientId: receptionistPatientId,
       });
       if (result.ok) {
         setSuccess({

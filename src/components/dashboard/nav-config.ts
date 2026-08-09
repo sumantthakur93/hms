@@ -30,7 +30,11 @@ export const NAV_PER_ROLE: Record<UserRole, NavItem[]> = {
   ],
   DOCTOR: [
     { label: "Dashboard", href: "/doctor", icon: "LayoutDashboard" },
-    { label: "My Appointments", href: "/doctor/appointments", icon: "CalendarClock" },
+    {
+      label: "My Appointments",
+      href: "/doctor/appointments",
+      icon: "CalendarClock",
+    },
     { label: "My Patients", href: "/doctor/patients", icon: "Users" },
     { label: "Prescriptions", href: "/doctor/prescriptions", icon: "FileText" },
     { label: "Lab Results", href: "/doctor/lab-results", icon: "TestTube" },
@@ -39,17 +43,34 @@ export const NAV_PER_ROLE: Record<UserRole, NavItem[]> = {
   PATIENT: [
     { label: "Dashboard", href: "/patient", icon: "LayoutDashboard" },
     { label: "Book Appointment", href: "/patient/book", icon: "CalendarPlus" },
-    { label: "My Appointments", href: "/patient/appointments", icon: "CalendarClock" },
-    { label: "Prescriptions", href: "/patient/prescriptions", icon: "FileText" },
+    {
+      label: "My Appointments",
+      href: "/patient/appointments",
+      icon: "CalendarClock",
+    },
+    {
+      label: "Prescriptions",
+      href: "/patient/prescriptions",
+      icon: "FileText",
+    },
     { label: "Lab Results", href: "/patient/lab-results", icon: "TestTube" },
     { label: "Medical History", href: "/patient/history", icon: "History" },
     { label: "Chat", href: "/patient/chat", icon: "MessageSquare" },
   ],
   RECEPTIONIST: [
     { label: "Dashboard", href: "/receptionist", icon: "LayoutDashboard" },
-    { label: "Today's Appointments", href: "/receptionist/appointments", icon: "CalendarClock" },
-    { label: "Register Patient", href: "/receptionist/register", icon: "UserPlus" },
-    { label: "Search Patient", href: "/receptionist/search", icon: "Search" },
+    {
+      label: "Today's Appointments",
+      href: "/receptionist/appointments",
+      icon: "CalendarClock",
+    },
+    {
+      label: "Book Appointment",
+      href: "/receptionist/book",
+      icon: "CalendarPlus",
+    },
+    { label: "Register Patient", href: "/receptionist", icon: "UserPlus" },
+    { label: "Search Patient", href: "/receptionist", icon: "Search" },
     { label: "Billing", href: "/receptionist/billing", icon: "Receipt" },
     { label: "Chat", href: "/receptionist/chat", icon: "MessageSquare" },
   ],

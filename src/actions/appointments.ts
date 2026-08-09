@@ -25,6 +25,7 @@ const bookAppointmentSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be HH:mm"),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be HH:mm"),
   reason: z.string().optional(),
+  patientId: z.string().optional(), // receptionist books on behalf
 });
 
 export type BookAppointmentInput = z.infer<typeof bookAppointmentSchema>;
@@ -130,7 +131,14 @@ export async function bookAppointment(input: BookAppointmentInput) {
     };
   }
 
-  const { doctorId, date, startTime, endTime, reason } = parsed.data;
+  const {
+    doctorId,
+    date,
+    startTime,
+    endTime,
+    reason,
+    patientId: inputPatientId,
+  } = parsed.data;
   const dateObj = new Date(date + "T00:00:00");
 
   // Determine patientId: patient uses their own, receptionist must specify
@@ -141,12 +149,11 @@ export async function bookAppointment(input: BookAppointmentInput) {
     }
     patientId = user.patientId;
   } else {
-    // Receptionist booking on behalf — patientId passed via reason prefix
-    // For now, receptionist booking is handled in T6; here we reject
-    return {
-      ok: false as const,
-      error: "Receptionist booking not yet supported",
-    };
+    // Receptionist booking on behalf — patientId must be provided
+    if (!inputPatientId) {
+      return { ok: false as const, error: "Patient is required" };
+    }
+    patientId = inputPatientId;
   }
 
   // Check blocked date
@@ -413,4 +420,194 @@ export async function getDepartmentsForBooking() {
       doctorCount: d.doctors.length,
     })),
   };
+}
+
+// ─── Receptionist: Today's appointments ────────────────────────────────────────
+
+export async function getTodaysAppointments() {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN");
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const appointments = await prisma.appointment.findMany({
+    where: { date: today },
+    include: {
+      patient: {
+        select: {
+          id: true,
+          mrn: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+        },
+      },
+      doctor: {
+        include: {
+          user: { select: { name: true } },
+          department: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { startTime: "asc" },
+  });
+
+  return {
+    ok: true as const,
+    appointments: appointments.map((a) => ({
+      id: a.id,
+      patientId: a.patientId,
+      doctorId: a.doctorId,
+      startTime: a.startTime,
+      endTime: a.endTime,
+      status: a.status,
+      reason: a.reason,
+      patientName: `${a.patient.firstName} ${a.patient.lastName}`,
+      mrn: a.patient.mrn,
+      phone: a.patient.phone,
+      doctorName: a.doctor.user.name ?? "",
+      departmentName: a.doctor.department.name,
+    })),
+  };
+}
+
+// ─── Receptionist: Check-in ────────────────────────────────────────────────────
+
+export async function checkInAppointment(appointmentId: string) {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN");
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+
+  if (!appointment) {
+    return { ok: false as const, error: "Appointment not found" };
+  }
+
+  if (appointment.status !== "CONFIRMED") {
+    return {
+      ok: false as const,
+      error: "Only confirmed appointments can be checked in",
+    };
+  }
+
+  const updated = await prisma.appointment.update({
+    where: { id: appointmentId },
+    data: { status: "CHECKED_IN" },
+  });
+
+  return { ok: true as const, appointment: updated };
+}
+
+// ─── Receptionist/Doctor: No-show ──────────────────────────────────────────────
+
+export async function markNoShow(appointmentId: string) {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN", "DOCTOR");
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+
+  if (!appointment) {
+    return { ok: false as const, error: "Appointment not found" };
+  }
+
+  if (appointment.status !== "CHECKED_IN") {
+    return {
+      ok: false as const,
+      error: "Only checked-in appointments can be marked as no-show",
+    };
+  }
+
+  const updated = await prisma.appointment.update({
+    where: { id: appointmentId },
+    data: { status: "NO_SHOW" },
+  });
+
+  return { ok: true as const, appointment: updated };
+}
+
+// ─── Receptionist: Walk-in registration ────────────────────────────────────────
+
+const walkInSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  phone: z.string().min(10, "Valid phone number is required"),
+});
+
+export type WalkInInput = z.infer<typeof walkInSchema>;
+
+// ─── Receptionist: Search patient by phone ─────────────────────────────────────
+
+export async function findPatientByPhone(phone: string) {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN");
+
+  if (!phone || phone.trim().length < 4) {
+    return { ok: false as const, error: "Enter at least 4 digits" };
+  }
+
+  const patient = await prisma.patient.findFirst({
+    where: { phone: { contains: phone.trim() } },
+    select: {
+      id: true,
+      mrn: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+    },
+  });
+
+  if (!patient) {
+    return {
+      ok: false as const,
+      error: "No patient found with this phone number",
+    };
+  }
+
+  return { ok: true as const, patient };
+}
+
+export async function walkInRegistration(input: WalkInInput) {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN");
+
+  const parsed = walkInSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  // Generate MRN
+  const lastPatient = await prisma.patient.findFirst({
+    orderBy: { mrn: "desc" },
+    select: { mrn: true },
+  });
+  const nextNum = lastPatient
+    ? parseInt(lastPatient.mrn.replace("MRN-", ""), 10) + 1
+    : 1;
+  const mrn = `MRN-${String(nextNum).padStart(5, "0")}`;
+
+  const patient = await prisma.patient.create({
+    data: {
+      mrn,
+      firstName: parsed.data.firstName,
+      lastName: parsed.data.lastName,
+      phone: parsed.data.phone,
+    },
+    select: {
+      id: true,
+      mrn: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+    },
+  });
+
+  return { ok: true as const, patient };
 }

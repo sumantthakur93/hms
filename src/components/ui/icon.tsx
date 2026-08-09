@@ -56,6 +56,8 @@ import {
   Edit01Icon,
   UserIcon,
   Hospital01Icon,
+  UserCheck01Icon,
+  UserRemove01Icon,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = {
@@ -136,6 +138,8 @@ export const Save = makeIcon(FloppyDiskIcon);
 export const Lock = makeIcon(LockIcon);
 export const Edit3 = makeIcon(Edit01Icon);
 export const User = makeIcon(UserIcon);
+export const UserCheck = makeIcon(UserCheck01Icon);
+export const UserX = makeIcon(UserRemove01Icon);
 export const Stethoscope = makeIcon(StethoscopeIcon);
 export const Hospital = makeIcon(Hospital01Icon);
 export const Calendar = makeIcon(CalendarCheckIn01Icon);
