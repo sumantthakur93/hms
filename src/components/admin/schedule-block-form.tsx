@@ -8,6 +8,16 @@ import {
   deleteScheduleBlock,
   type ScheduleBlockInput,
 } from "@/actions/schedule";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
 
 type ScheduleBlock = {
   id: string;
@@ -78,45 +88,48 @@ export function ScheduleBlockManager({
           return (
             <div
               key={idx}
-              className="rounded-lg border border-slate-800 bg-slate-900/50 p-3"
+              className="rounded-lg border border-border bg-muted/30 p-3"
             >
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {day}
               </p>
               <div className="space-y-2">
                 {dayBlocks.map((b) => (
                   <div
                     key={b.id}
-                    className="flex items-center justify-between rounded-md bg-slate-800/50 px-3 py-2"
+                    className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
                   >
                     <div className="flex items-center gap-3 text-sm">
-                      <span className="font-mono text-slate-200">
+                      <span className="font-mono text-foreground">
                         {b.startTime}–{b.endTime}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {b.slotDuration}min slots
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => startEdit(b)}
                         aria-label="Edit block"
-                        className="rounded p-1 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
                       >
                         <Pencil className="size-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => handleDelete(b.id)}
                         disabled={deletingId === b.id}
                         aria-label="Delete block"
-                        className="rounded p-1 text-slate-400 hover:bg-red-900/30 hover:text-red-400"
+                        className="text-muted-foreground hover:text-red-400"
                       >
                         {deletingId === b.id ? (
                           <Loader2 className="size-3.5 animate-spin" />
                         ) : (
                           <Trash2 className="size-3.5" />
                         )}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -125,7 +138,7 @@ export function ScheduleBlockManager({
           );
         })}
         {blocks.length === 0 && (
-          <p className="py-4 text-center text-sm text-slate-500">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             No schedule blocks yet. Add one to generate appointment slots.
           </p>
         )}
@@ -133,12 +146,13 @@ export function ScheduleBlockManager({
 
       {/* Add button */}
       {!showForm && (
-        <button
+        <Button
+          variant="outline"
           onClick={startCreate}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 py-2.5 text-sm font-medium text-slate-400 hover:border-blue-600 hover:text-blue-500"
+          className="w-full border-dashed"
         >
           <Plus className="size-4" /> Add Schedule Block
-        </button>
+        </Button>
       )}
 
       {/* Form */}
@@ -207,19 +221,15 @@ function ScheduleBlockForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4"
+      className="space-y-3 rounded-lg border border-border bg-card p-4"
     >
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-slate-200">
+        <h4 className="text-sm font-semibold text-foreground">
           {editingBlock ? "Edit Block" : "New Schedule Block"}
         </h4>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-slate-500 hover:text-slate-300"
-        >
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onCancel}>
           <X className="size-4" />
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -229,86 +239,66 @@ function ScheduleBlockForm({
         </div>
       )}
 
-      <div>
-        <label
-          htmlFor="sb-day"
-          className="mb-1 block text-xs font-medium text-slate-400"
+      <div className="space-y-1.5">
+        <Label htmlFor="sb-day">Day of week</Label>
+        <Select
+          value={String(dayOfWeek)}
+          onValueChange={(v) => setDayOfWeek(Number(v))}
         >
-          Day of week
-        </label>
-        <select
-          id="sb-day"
-          value={dayOfWeek}
-          onChange={(e) => setDayOfWeek(Number(e.target.value))}
-          className="input"
-        >
-          {DAYS.map((d, i) => (
-            <option key={i} value={i}>
-              {d}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="sb-day" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DAYS.map((d, i) => (
+              <SelectItem key={i} value={String(i)}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label
-            htmlFor="sb-start"
-            className="mb-1 block text-xs font-medium text-slate-400"
-          >
-            Start time
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="sb-start">Start time</Label>
+          <Input
             id="sb-start"
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="input"
           />
         </div>
-        <div>
-          <label
-            htmlFor="sb-end"
-            className="mb-1 block text-xs font-medium text-slate-400"
-          >
-            End time
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="sb-end">End time</Label>
+          <Input
             id="sb-end"
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="input"
           />
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="sb-slot"
-          className="mb-1 block text-xs font-medium text-slate-400"
+      <div className="space-y-1.5">
+        <Label htmlFor="sb-slot">Slot duration (minutes)</Label>
+        <Select
+          value={String(slotDuration)}
+          onValueChange={(v) => setSlotDuration(Number(v))}
         >
-          Slot duration (minutes)
-        </label>
-        <select
-          id="sb-slot"
-          value={slotDuration}
-          onChange={(e) => setSlotDuration(Number(e.target.value))}
-          className="input"
-        >
-          {[10, 15, 20, 30, 45, 60, 90, 120].map((d) => (
-            <option key={d} value={d}>
-              {d} min
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="sb-slot" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[10, 15, 20, 30, 45, 60, 90, 120].map((d) => (
+              <SelectItem key={d} value={String(d)}>
+                {d} min
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={saving} className="w-full">
         {saving ? (
           <>
             <Loader2 className="size-4 animate-spin" /> Saving...
@@ -316,7 +306,7 @@ function ScheduleBlockForm({
         ) : (
           <>{editingBlock ? "Update Block" : "Add Block"}</>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

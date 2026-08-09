@@ -5,6 +5,16 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export function LoginForm() {
   const searchParams = useSearchParams();
@@ -46,122 +56,107 @@ export function LoginForm() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
-        {/* Logo + name */}
-        <div className="mb-6 flex flex-col items-center gap-2">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-blue-600 text-2xl font-bold text-white">
+      <Card className="w-full max-w-md">
+        <CardHeader className="items-center text-center">
+          <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-blue-600 text-2xl font-bold text-white">
             C
           </div>
-          <h1 className="text-xl font-bold text-slate-100">
-            CarePoint Hospital
-          </h1>
-        </div>
+          <CardTitle className="text-xl">CarePoint Hospital</CardTitle>
+          <CardDescription>
+            Role-based access — your dashboard loads automatically after login.
+          </CardDescription>
+        </CardHeader>
 
-        <h2 className="mb-1 text-lg font-semibold text-slate-200">
-          Welcome back
-        </h2>
-        <p className="mb-6 text-sm text-slate-500">
-          Role-based access — your dashboard loads automatically after login.
-        </p>
-
-        {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-950/50 px-3 py-2 text-sm text-rose-300">
-            <AlertCircle className="size-4 shrink-0" />
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium text-slate-300"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-300"
-              >
-                Password
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="text-xs text-slate-500 hover:text-slate-300"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
+        <CardContent className="space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-950/50 px-3 py-2 text-sm text-rose-300">
+              <AlertCircle className="size-4 shrink-0" />
+              {error}
             </div>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
                 required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 pr-10 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="••••••••"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
             </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="h-auto p-0 text-xs text-slate-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  placeholder="••••••••"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? "Signing in…" : "Sign In"}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-800" />
+            <span className="text-xs text-slate-600">or</span>
+            <div className="h-px flex-1 bg-slate-800" />
           </div>
 
-          <div className="flex justify-end">
-            <span className="text-xs text-slate-500">Forgot password?</span>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-          >
-            {loading && <Loader2 className="size-4 animate-spin" />}
-            {loading ? "Signing in…" : "Sign In"}
-          </button>
-        </form>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-xs text-slate-600">or</span>
-          <div className="h-px flex-1 bg-slate-800" />
-        </div>
-
-        <p className="text-center text-sm text-slate-400">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-semibold text-blue-400 hover:text-blue-300"
-          >
-            Create an account
-          </Link>
-        </p>
-      </div>
+          <p className="text-center text-sm text-slate-400">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-semibold text-blue-400 hover:text-blue-300"
+            >
+              Create an account
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }

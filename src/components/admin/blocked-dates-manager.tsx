@@ -10,6 +10,9 @@ import {
   X,
 } from "lucide-react";
 import { addBlockedDate, removeBlockedDate } from "@/actions/schedule";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type BlockedDate = {
   id: string;
@@ -52,19 +55,19 @@ export function BlockedDatesManager({
       {/* Existing blocked dates */}
       <div className="space-y-2">
         {blockedDates.length === 0 ? (
-          <p className="py-4 text-center text-sm text-slate-500">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             No blocked dates. The doctor is available on all scheduled days.
           </p>
         ) : (
           blockedDates.map((bd) => (
             <div
               key={bd.id}
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5"
+              className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5"
             >
               <div className="flex items-center gap-3">
                 <CalendarOff className="size-4 text-amber-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-200">
+                  <p className="text-sm font-medium text-foreground">
                     {new Date(bd.date).toLocaleDateString("en-IN", {
                       day: "2-digit",
                       month: "short",
@@ -72,22 +75,24 @@ export function BlockedDatesManager({
                     })}
                   </p>
                   {bd.reason && (
-                    <p className="text-xs text-slate-500">{bd.reason}</p>
+                    <p className="text-xs text-muted-foreground">{bd.reason}</p>
                   )}
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => handleDelete(bd.id)}
                 disabled={deletingId === bd.id}
                 aria-label="Remove blocked date"
-                className="rounded p-1 text-slate-400 hover:bg-red-900/30 hover:text-red-400"
+                className="text-muted-foreground hover:text-red-400"
               >
                 {deletingId === bd.id ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <Trash2 className="size-4" />
                 )}
-              </button>
+              </Button>
             </div>
           ))
         )}
@@ -95,12 +100,13 @@ export function BlockedDatesManager({
 
       {/* Add button */}
       {!showForm && (
-        <button
+        <Button
+          variant="outline"
           onClick={() => setShowForm(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 py-2.5 text-sm font-medium text-slate-400 hover:border-blue-600 hover:text-blue-500"
+          className="w-full border-dashed"
         >
           <Plus className="size-4" /> Block a Date
-        </button>
+        </Button>
       )}
 
       {/* Form */}
@@ -151,17 +157,13 @@ function BlockedDateForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4"
+      className="space-y-3 rounded-lg border border-border bg-card p-4"
     >
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-slate-200">Block a Date</h4>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-slate-500 hover:text-slate-300"
-        >
+        <h4 className="text-sm font-semibold text-foreground">Block a Date</h4>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onCancel}>
           <X className="size-4" />
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -171,44 +173,28 @@ function BlockedDateForm({
         </div>
       )}
 
-      <div>
-        <label
-          htmlFor="blocked-date"
-          className="mb-1 block text-xs font-medium text-slate-400"
-        >
-          Date
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="blocked-date">Date</Label>
+        <Input
           id="blocked-date"
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="input"
           required
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="blocked-reason"
-          className="mb-1 block text-xs font-medium text-slate-400"
-        >
-          Reason (optional)
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="blocked-reason">Reason (optional)</Label>
+        <Input
           id="blocked-reason"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="input"
           placeholder="Leave, holiday, emergency..."
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={saving || !date}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={saving || !date} className="w-full">
         {saving ? (
           <>
             <Loader2 className="size-4 animate-spin" /> Blocking...
@@ -218,7 +204,7 @@ function BlockedDateForm({
             <CalendarOff className="size-4" /> Block Date
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

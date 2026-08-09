@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { Save, Loader2, AlertCircle, Lock } from "lucide-react";
 import { updatePatient } from "@/actions/patients";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
 
 type Patient = {
   id: string;
@@ -38,16 +49,26 @@ export function PatientEditForm({
   const [lastName, setLastName] = useState(patient.lastName);
   const [email, setEmail] = useState(patient.email ?? "");
   const [dateOfBirth, setDateOfBirth] = useState(
-    patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split("T")[0] : "",
+    patient.dateOfBirth
+      ? new Date(patient.dateOfBirth).toISOString().split("T")[0]
+      : "",
   );
   const [gender, setGender] = useState(patient.gender ?? "");
   const [bloodGroup, setBloodGroup] = useState(patient.bloodGroup ?? "");
   const [address, setAddress] = useState(patient.address ?? "");
-  const [emergencyName, setEmergencyName] = useState(patient.emergencyName ?? "");
-  const [emergencyPhone, setEmergencyPhone] = useState(patient.emergencyPhone ?? "");
-  const [emergencyRelation, setEmergencyRelation] = useState(patient.emergencyRelation ?? "");
+  const [emergencyName, setEmergencyName] = useState(
+    patient.emergencyName ?? "",
+  );
+  const [emergencyPhone, setEmergencyPhone] = useState(
+    patient.emergencyPhone ?? "",
+  );
+  const [emergencyRelation, setEmergencyRelation] = useState(
+    patient.emergencyRelation ?? "",
+  );
   const [allergies, setAllergies] = useState(patient.allergies ?? "");
-  const [medicalHistory, setMedicalHistory] = useState(patient.medicalHistory ?? "");
+  const [medicalHistory, setMedicalHistory] = useState(
+    patient.medicalHistory ?? "",
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +77,8 @@ export function PatientEditForm({
     setSaved(false);
 
     const result = await updatePatient(patient.id, {
-      firstName, lastName,
+      firstName,
+      lastName,
       email: email || undefined,
       dateOfBirth: dateOfBirth || undefined,
       gender: gender ? (gender as "MALE" | "FEMALE" | "OTHER") : undefined,
@@ -81,21 +103,25 @@ export function PatientEditForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* MRN (read-only) */}
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">MRN</label>
-        <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
-          <Lock className="size-3.5 text-slate-600" />
-          <span className="font-mono text-sm font-semibold text-slate-300">{patient.mrn}</span>
+      <div className="space-y-1.5">
+        <Label>MRN</Label>
+        <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2">
+          <Lock className="size-3.5 text-muted-foreground" />
+          <span className="font-mono text-sm font-semibold text-foreground">
+            {patient.mrn}
+          </span>
         </div>
-        <p className="mt-1 text-xs text-slate-600">MRN is immutable and cannot be changed</p>
+        <p className="text-xs text-muted-foreground">
+          MRN is immutable and cannot be changed
+        </p>
       </div>
 
       {/* Phone (read-only — not editable via update schema) */}
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">Phone</label>
-        <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
-          <Lock className="size-3.5 text-slate-600" />
-          <span className="text-sm text-slate-300">{patient.phone}</span>
+      <div className="space-y-1.5">
+        <Label>Phone</Label>
+        <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2">
+          <Lock className="size-3.5 text-muted-foreground" />
+          <span className="text-sm text-foreground">{patient.phone}</span>
         </div>
       </div>
 
@@ -113,124 +139,139 @@ export function PatientEditForm({
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">First name</label>
-          <input
+        <div className="space-y-1.5">
+          <Label>First name</Label>
+          <Input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="input"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">Last name</label>
-          <input
+        <div className="space-y-1.5">
+          <Label>Last name</Label>
+          <Input
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="input"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">Email</label>
-          <input
+        <div className="space-y-1.5">
+          <Label>Email</Label>
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">Date of birth</label>
-          <input
+        <div className="space-y-1.5">
+          <Label>Date of birth</Label>
+          <Input
             type="date"
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
-            className="input"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">Gender</label>
-          <select value={gender} onChange={(e) => setGender(e.target.value)} className="input">
-            <option value="">Select</option>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-            <option value="OTHER">Other</option>
-          </select>
+        <div className="space-y-1.5">
+          <Label>Gender</Label>
+          <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MALE">Male</SelectItem>
+              <SelectItem value="FEMALE">Female</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-400">Blood group</label>
-          <select value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} className="input">
-            <option value="">Select</option>
-            {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-              <option key={bg} value={bg}>{bg}</option>
-            ))}
-          </select>
+        <div className="space-y-1.5">
+          <Label>Blood group</Label>
+          <Select value={bloodGroup} onValueChange={(v) => setBloodGroup(v ?? "")}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                <SelectItem key={bg} value={bg}>
+                  {bg}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">Address</label>
-        <textarea
+      <div className="space-y-1.5">
+        <Label>Address</Label>
+        <Textarea
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className="input min-h-[60px] resize-y"
+          className="min-h-[60px] resize-y"
         />
       </div>
 
-      <div className="border-t border-slate-800 pt-3">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="border-t border-border pt-3">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Emergency contact
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-400">Name</label>
-            <input value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} className="input" />
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input
+              value={emergencyName}
+              onChange={(e) => setEmergencyName(e.target.value)}
+            />
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-400">Phone</label>
-            <input value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} className="input" />
+          <div className="space-y-1.5">
+            <Label>Phone</Label>
+            <Input
+              value={emergencyPhone}
+              onChange={(e) => setEmergencyPhone(e.target.value)}
+            />
           </div>
         </div>
-        <div className="mt-3">
-          <label className="mb-1 block text-xs font-medium text-slate-400">Relation</label>
-          <input value={emergencyRelation} onChange={(e) => setEmergencyRelation(e.target.value)} className="input" />
+        <div className="mt-3 space-y-1.5">
+          <Label>Relation</Label>
+          <Input
+            value={emergencyRelation}
+            onChange={(e) => setEmergencyRelation(e.target.value)}
+          />
         </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">Allergies</label>
-        <textarea
+      <div className="space-y-1.5">
+        <Label>Allergies</Label>
+        <Textarea
           value={allergies}
           onChange={(e) => setAllergies(e.target.value)}
-          className="input min-h-[40px] resize-y"
+          className="min-h-[40px] resize-y"
         />
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">Medical history</label>
-        <textarea
+      <div className="space-y-1.5">
+        <Label>Medical history</Label>
+        <Textarea
           value={medicalHistory}
           onChange={(e) => setMedicalHistory(e.target.value)}
-          className="input min-h-[40px] resize-y"
+          className="min-h-[40px] resize-y"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={saving} className="w-full" size="lg">
         {saving ? (
-          <><Loader2 className="size-4 animate-spin" /> Saving...</>
+          <>
+            <Loader2 className="size-4 animate-spin" /> Saving...
+          </>
         ) : (
-          <><Save className="size-4" /> Save Changes</>
+          <>
+            <Save className="size-4" /> Save Changes
+          </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

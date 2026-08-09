@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Loader2, User } from "lucide-react";
 import { searchPatients } from "@/actions/patients";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type PatientResult = {
   id: string;
@@ -46,47 +48,48 @@ export function PatientSearch() {
     <div className="space-y-3">
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-        <input
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
           value={query}
           onChange={handleChange}
-          className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+          className="pl-10"
           placeholder="Search by name, phone, or MRN..."
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-slate-500" />
+          <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
       </div>
 
       {/* Results */}
       {hasSearched && !loading && results.length === 0 && (
-        <p className="py-4 text-center text-sm text-slate-500">
+        <p className="py-4 text-center text-sm text-muted-foreground">
           No patients found for &ldquo;{query}&rdquo;
         </p>
       )}
 
       {results.length > 0 && (
-        <div className="divide-y divide-slate-800 rounded-lg border border-slate-800 bg-slate-900">
+        <div className="divide-y divide-border rounded-lg border border-border bg-card">
           {results.map((p) => (
-            <button
+            <Button
               key={p.id}
+              variant="ghost"
               onClick={() => router.push(`/receptionist?edit=${p.id}`)}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-800/50"
+              className="flex w-full items-center gap-3 justify-start px-4 py-3 h-auto font-normal"
             >
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-800">
-                <User className="size-4 text-slate-400" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                <User className="size-4 text-muted-foreground" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-slate-100">
+              <div className="flex-1 min-w-0 text-left">
+                <p className="truncate text-sm font-medium text-foreground">
                   {p.firstName} {p.lastName}
                 </p>
-                <p className="truncate text-xs text-slate-500">
+                <p className="truncate text-xs text-muted-foreground">
                   <span className="font-mono">{p.mrn}</span> · {p.phone}
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-xs text-slate-500">Last visit</p>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs text-muted-foreground">Last visit</p>
+                <p className="text-xs font-medium text-muted-foreground">
                   {new Date(p.lastVisit).toLocaleDateString("en-IN", {
                     day: "2-digit",
                     month: "short",
@@ -94,7 +97,7 @@ export function PatientSearch() {
                   })}
                 </p>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, CalendarPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { label: "Departments", href: "#departments" },
@@ -40,20 +41,19 @@ export function LandingNav({ brand }: { brand: string }) {
 
         {/* CTA + mobile toggle */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500 sm:flex"
-          >
+          <Button render={<Link href="/login" />} className="hidden sm:flex">
             <CalendarPlus className="size-4" />
             Book Appointment
-          </Link>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setOpen((o) => !o)}
-            className="flex size-9 items-center justify-center rounded-md text-slate-300 hover:bg-slate-800 md:hidden"
+            className="md:hidden"
             aria-label="Toggle menu"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -71,14 +71,13 @@ export function LandingNav({ brand }: { brand: string }) {
                 {link.label}
               </a>
             ))}
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
+            <Button
+              render={<Link href="/login" onClick={() => setOpen(false)} />}
+              className="mt-2 w-full"
             >
               <CalendarPlus className="size-4" />
               Book Appointment
-            </Link>
+            </Button>
           </nav>
         </div>
       )}

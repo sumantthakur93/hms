@@ -5,10 +5,34 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Eye, EyeOff, Loader2, AlertCircle, ChevronDown, ChevronUp,
-  ShieldCheck, Clock, HeartPulse, Check,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Clock,
+  HeartPulse,
+  Check,
 } from "lucide-react";
-import { signupPatient, checkDuplicatePhone, type SignupInput } from "@/actions/auth";
+import {
+  signupPatient,
+  checkDuplicatePhone,
+  type SignupInput,
+} from "@/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 
 export function SignupForm() {
   const router = useRouter();
@@ -127,18 +151,17 @@ export function SignupForm() {
   if (success) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
-        <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-xl">
+        <Card className="w-full max-w-md p-8 text-center">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-green-600">
             <Check className="size-6 text-white" />
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-slate-100">{success}</h2>
-          <Link
-            href="/login"
-            className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-          >
+          <h2 className="mb-2 text-lg font-semibold text-slate-100">
+            {success}
+          </h2>
+          <Button render={<Link href="/login" />} className="mt-4">
             Sign In
-          </Link>
-        </div>
+          </Button>
+        </Card>
       </main>
     );
   }
@@ -147,13 +170,17 @@ export function SignupForm() {
     <main className="flex min-h-screen bg-slate-950">
       {/* Left: form */}
       <div className="flex w-full flex-col items-center justify-center p-4 lg:w-1/2">
-        <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl sm:p-8">
+        <Card className="w-full max-w-md p-6 sm:p-8">
           <div className="mb-6 flex flex-col items-center gap-2">
             <div className="flex size-10 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
               C
             </div>
-            <h1 className="text-lg font-bold text-slate-100">Create Your Account</h1>
-            <p className="text-sm text-slate-500">Sign up as a patient at CarePoint Hospital</p>
+            <h1 className="text-lg font-bold text-slate-100">
+              Create Your Account
+            </h1>
+            <p className="text-sm text-slate-500">
+              Sign up as a patient at CarePoint Hospital
+            </p>
           </div>
 
           {error && (
@@ -166,44 +193,42 @@ export function SignupForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Required fields */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-300">
+              <div className="space-y-1.5">
+                <Label>
                   First name <span className="text-rose-400">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-300">
+              <div className="space-y-1.5">
+                <Label>
                   Last name <span className="text-rose-400">*</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-300">
+            <div className="space-y-1.5">
+              <Label>
                 Phone <span className="text-rose-400">*</span>
-              </label>
+              </Label>
               <div className="flex">
-                <span className="inline-flex items-center rounded-l-lg border border-r-0 border-slate-700 bg-slate-800 px-3 text-sm text-slate-400">
+                <span className="inline-flex items-center rounded-l-lg border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
                   +91
                 </span>
-                <input
+                <Input
                   required
                   type="tel"
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="w-full rounded-r-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="rounded-l-none"
                   placeholder="98765 43210"
                 />
               </div>
@@ -215,70 +240,81 @@ export function SignupForm() {
                     <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-400" />
                     <div className="flex-1">
                       <p className="text-sm text-amber-300">
-                        A patient with this phone number already exists. If this is a new person in the same family, you can continue.
+                        A patient with this phone number already exists. If this
+                        is a new person in the same family, you can continue.
                       </p>
                       <div className="mt-2 flex gap-2">
-                        <button
+                        <Button
                           type="button"
+                          size="sm"
                           onClick={() => setPhoneWarningDismissed(true)}
-                          className="rounded-md bg-amber-700 px-3 py-1 text-xs font-medium text-white hover:bg-amber-600"
+                          className="bg-amber-700 hover:bg-amber-600"
                         >
                           Continue anyway
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             setPhone("");
                             setPhoneWarning(false);
                             setPhoneWarningDismissed(false);
                           }}
-                          className="rounded-md border border-amber-700 px-3 py-1 text-xs font-medium text-amber-300 hover:bg-amber-900/50"
+                          className="border-amber-700 text-amber-300 hover:bg-amber-900/50"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
               {phoneWarning && phoneWarningDismissed && (
-                <p className="mt-1 text-xs text-amber-400">Continuing with duplicate phone number.</p>
+                <p className="mt-1 text-xs text-amber-400">
+                  Continuing with duplicate phone number.
+                </p>
               )}
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-300">
+            <div className="space-y-1.5">
+              <Label>
                 Email <span className="text-rose-400">*</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="you@example.com"
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-300">
+            <div className="space-y-1.5">
+              <Label>
                 Password <span className="text-rose-400">*</span>
-              </label>
+              </Label>
               <div className="relative">
-                <input
+                <Input
                   required
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 pr-10 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="pr-10"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-1 top-1/2 -translate-y-1/2"
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </Button>
               </div>
               {/* Password strength indicator */}
               {password && (
@@ -287,171 +323,187 @@ export function SignupForm() {
                     <div
                       key={i}
                       className={`h-1 flex-1 rounded-full ${
-                        i < pwStrength.score
-                          ? pwStrength.color
-                          : "bg-slate-700"
+                        i < pwStrength.score ? pwStrength.color : "bg-slate-700"
                       }`}
                     />
                   ))}
                 </div>
               )}
               {password && (
-                <p className="mt-1 text-xs text-slate-500">{pwStrength.label}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {pwStrength.label}
+                </p>
               )}
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-300">
+            <div className="space-y-1.5">
+              <Label>
                 Confirm password <span className="text-rose-400">*</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 required
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               {confirmPassword && password !== confirmPassword && (
-                <p className="mt-1 text-xs text-rose-400">Passwords do not match.</p>
+                <p className="mt-1 text-xs text-rose-400">
+                  Passwords do not match.
+                </p>
               )}
             </div>
 
             {/* Collapsible optional section */}
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setShowOptional((s) => !s)}
-              className="flex w-full items-center justify-between rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+              className="w-full justify-between"
             >
               More about you (optional)
-              {showOptional ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-            </button>
+              {showOptional ? (
+                <ChevronUp className="size-4" />
+              ) : (
+                <ChevronDown className="size-4" />
+              )}
+            </Button>
 
             {showOptional && (
               <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-800/30 p-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-400">Date of birth</label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Date of birth</Label>
+                    <Input
                       type="date"
                       value={dateOfBirth}
                       onChange={(e) => setDateOfBirth(e.target.value)}
-                      className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-400">Gender</label>
-                    <select
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Gender</Label>
+                    <Select
                       value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                      onValueChange={(v) => setGender(v ?? "")}
                     >
-                      <option value="">Select…</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Male</SelectItem>
+                        <SelectItem value="FEMALE">Female</SelectItem>
+                        <SelectItem value="OTHER">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Blood group</label>
-                  <select
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Blood group</Label>
+                  <Select
                     value={bloodGroup}
-                    onChange={(e) => setBloodGroup(e.target.value)}
-                    className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                    onValueChange={(v) => setBloodGroup(v ?? "")}
                   >
-                    <option value="">Select…</option>
-                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                      <option key={bg} value={bg}>{bg}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                        (bg) => (
+                          <SelectItem key={bg} value={bg}>
+                            {bg}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Address</label>
-                  <textarea
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Address</Label>
+                  <Textarea
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     rows={2}
-                    className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-400">Emergency name</label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Emergency name</Label>
+                    <Input
                       value={emergencyName}
                       onChange={(e) => setEmergencyName(e.target.value)}
-                      className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-400">Emergency phone</label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Emergency phone</Label>
+                    <Input
                       type="tel"
                       value={emergencyPhone}
                       onChange={(e) => setEmergencyPhone(e.target.value)}
-                      className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-400">Relationship</label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Relationship</Label>
+                    <Input
                       value={emergencyRelation}
                       onChange={(e) => setEmergencyRelation(e.target.value)}
-                      className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Allergies</label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Allergies</Label>
+                  <Input
                     value={allergies}
                     onChange={(e) => setAllergies(e.target.value)}
-                    className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                     placeholder="e.g. Penicillin, peanuts"
                   />
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Medical history</label>
-                  <textarea
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Medical history</Label>
+                  <Textarea
                     value={medicalHistory}
                     onChange={(e) => setMedicalHistory(e.target.value)}
                     rows={2}
-                    className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={loading || (phoneWarning && !phoneWarningDismissed)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              className="w-full"
+              size="lg"
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
               {loading ? "Creating account…" : "Create Account"}
-            </button>
+            </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-slate-400">
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-blue-400 hover:text-blue-300">
+            <Link
+              href="/login"
+              className="font-semibold text-blue-400 hover:text-blue-300"
+            >
               Sign in
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* Right: value props (desktop only) */}
       <div className="hidden flex-col justify-center gap-8 bg-gradient-to-br from-slate-900 to-slate-950 p-12 lg:flex lg:w-1/2">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100">Your health, one click away</h2>
+          <h2 className="text-2xl font-bold text-slate-100">
+            Your health, one click away
+          </h2>
           <p className="mt-2 text-slate-400">
-            Book appointments, view prescriptions, check lab results, and chat with our AI assistant — all in one place.
+            Book appointments, view prescriptions, check lab results, and chat
+            with our AI assistant — all in one place.
           </p>
         </div>
         <div className="space-y-4">
@@ -460,8 +512,12 @@ export function SignupForm() {
               <Clock className="size-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-200">24/7 Appointment Booking</h3>
-              <p className="text-sm text-slate-500">Book anytime, from anywhere. No more waiting on hold.</p>
+              <h3 className="font-semibold text-slate-200">
+                24/7 Appointment Booking
+              </h3>
+              <p className="text-sm text-slate-500">
+                Book anytime, from anywhere. No more waiting on hold.
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -470,7 +526,9 @@ export function SignupForm() {
             </div>
             <div>
               <h3 className="font-semibold text-slate-200">Secure & Private</h3>
-              <p className="text-sm text-slate-500">Your medical records are encrypted and role-access controlled.</p>
+              <p className="text-sm text-slate-500">
+                Your medical records are encrypted and role-access controlled.
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -478,8 +536,13 @@ export function SignupForm() {
               <HeartPulse className="size-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-200">AI Health Assistant</h3>
-              <p className="text-sm text-slate-500">Get instant answers about your prescriptions, lab results, and appointments.</p>
+              <h3 className="font-semibold text-slate-200">
+                AI Health Assistant
+              </h3>
+              <p className="text-sm text-slate-500">
+                Get instant answers about your prescriptions, lab results, and
+                appointments.
+              </p>
             </div>
           </div>
         </div>
@@ -488,7 +551,11 @@ export function SignupForm() {
   );
 }
 
-function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
+function getPasswordStrength(pw: string): {
+  score: number;
+  label: string;
+  color: string;
+} {
   let score = 0;
   if (pw.length >= 6) score++;
   if (pw.length >= 10) score++;

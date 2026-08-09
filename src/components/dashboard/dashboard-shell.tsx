@@ -30,6 +30,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { NavItem } from "./nav-config";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -154,9 +155,11 @@ export function DashboardShell({
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 md:px-6">
           {/* Sidebar toggle (desktop) */}
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setCollapsed((c) => !c)}
-            className="hidden size-8 items-center justify-center rounded-md border border-slate-800 text-slate-400 hover:bg-slate-800 lg:flex"
+            className="hidden lg:flex"
             aria-label="Toggle sidebar"
           >
             {collapsed ? (
@@ -164,16 +167,18 @@ export function DashboardShell({
             ) : (
               <ChevronLeft className="size-4" />
             )}
-          </button>
+          </Button>
 
           {/* Mobile menu button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setMobileNavOpen(true)}
-            className="flex size-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800 lg:hidden"
+            className="lg:hidden"
             aria-label="Open menu"
           >
             <Menu className="size-5" />
-          </button>
+          </Button>
 
           <h2 className="text-sm font-semibold text-slate-300">
             {roleLabel} Dashboard
@@ -185,16 +190,17 @@ export function DashboardShell({
           </div>
 
           {/* Notifications */}
-          <button className="relative flex size-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800">
+          <Button variant="ghost" size="icon" className="relative">
             <Bell className="size-4" />
             <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-rose-500" />
-          </button>
+          </Button>
 
           {/* User dropdown */}
           <div className="relative" ref={userMenuRef}>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setUserMenuOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-md p-1 hover:bg-slate-800"
+              className="flex items-center gap-2 p-1"
             >
               <div className="flex size-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-slate-400">
                 {(userName || roleLabel)[0]}
@@ -203,7 +209,7 @@ export function DashboardShell({
                 <p className="text-xs font-medium text-slate-200">{userName}</p>
                 <p className="text-xs text-slate-500">{roleLabel}</p>
               </div>
-            </button>
+            </Button>
 
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-800 bg-slate-900 py-1 shadow-xl">
@@ -246,12 +252,13 @@ export function DashboardShell({
                 </div>
                 <span className="text-lg font-bold text-blue-400">{brand}</span>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setMobileNavOpen(false)}
-                className="flex size-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800"
               >
                 <X className="size-5" />
-              </button>
+              </Button>
             </div>
             <nav className="space-y-1 p-2">
               {navItems.map((item) => {
@@ -300,13 +307,14 @@ export function DashboardShell({
         })}
 
         {moreItems.length > 0 && (
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setMoreOpen(true)}
-            className="flex flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-xs text-slate-500"
+            className="flex flex-1 flex-col items-center gap-0.5 py-1 text-xs text-slate-500 h-auto"
           >
             <MoreHorizontal className="size-5" />
             <span>More</span>
-          </button>
+          </Button>
         )}
       </nav>
 
@@ -320,12 +328,13 @@ export function DashboardShell({
           <div className="absolute bottom-0 left-0 right-0 rounded-t-xl border-t border-slate-800 bg-slate-900 pb-4">
             <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
               <h3 className="text-sm font-semibold text-slate-200">More</h3>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setMoreOpen(false)}
-                className="flex size-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800"
               >
                 <X className="size-5" />
-              </button>
+              </Button>
             </div>
             <nav className="space-y-1 p-2">
               {moreItems.map((item) => {

@@ -12,6 +12,17 @@ import {
 } from "lucide-react";
 import { createPatient, type PatientInput } from "@/actions/patients";
 import { checkDuplicatePhone as checkDuplicate } from "@/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
 
 type Status =
   | "idle"
@@ -142,20 +153,14 @@ export function PatientRegistrationForm({
           </p>
         </div>
         <div className="flex gap-3">
-          <a
-            href="/receptionist"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
+          <Button render={<a href="/receptionist" />}>
             <CalendarPlus className="size-4" />
             Book Appointment
-          </a>
-          <button
-            onClick={handleRegisterAnother}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700"
-          >
+          </Button>
+          <Button variant="outline" onClick={handleRegisterAnother}>
             <UserPlus className="size-4" />
             Register Another
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -177,25 +182,27 @@ export function PatientRegistrationForm({
               already has this phone number. Continue anyway?
             </p>
             <div className="mt-3 flex gap-2">
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={(e) =>
                   handleSubmit(e as unknown as React.FormEvent, true)
                 }
-                className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+                className="bg-amber-600 hover:bg-amber-700"
               >
                 Continue anyway
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setStatus("idle");
                   setDuplicateInfo(null);
                 }}
-                className="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -212,19 +219,17 @@ export function PatientRegistrationForm({
       {/* Required fields */}
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name" required>
-          <input
+          <Input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="input"
             placeholder="Rahul"
             required
           />
         </Field>
         <Field label="Last name" required>
-          <input
+          <Input
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="input"
             placeholder="Kumar"
             required
           />
@@ -233,11 +238,11 @@ export function PatientRegistrationForm({
 
       <Field label="Phone" required>
         <div className="relative">
-          <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-          <input
+          <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="input pl-10"
+            className="pl-10"
             placeholder="+91 98765 43210"
             required
           />
@@ -245,126 +250,125 @@ export function PatientRegistrationForm({
       </Field>
 
       {/* Optional section toggle */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => setShowOptional(!showOptional)}
-        className="flex w-full items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-300"
+        className="w-full justify-start text-muted-foreground"
       >
         <ChevronDown
           className={`size-4 transition-transform ${showOptional ? "rotate-180" : ""}`}
         />
         More about the patient
-      </button>
+      </Button>
 
       {/* Optional fields */}
       {showOptional && (
-        <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Email">
-              <input
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input"
                 placeholder="rahul@example.com"
               />
             </Field>
             <Field label="Date of birth">
-              <input
+              <Input
                 type="date"
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
-                className="input"
               />
             </Field>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Gender">
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="input"
-              >
-                <option value="">Select</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
-              </select>
+              <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">Male</SelectItem>
+                  <SelectItem value="FEMALE">Female</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
             <Field label="Blood group">
-              <select
+              <Select
                 value={bloodGroup}
-                onChange={(e) => setBloodGroup(e.target.value)}
-                className="input"
+                onValueChange={(v) => setBloodGroup(v ?? "")}
               >
-                <option value="">Select</option>
-                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                  (bg) => (
-                    <option key={bg} value={bg}>
-                      {bg}
-                    </option>
-                  ),
-                )}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                    (bg) => (
+                      <SelectItem key={bg} value={bg}>
+                        {bg}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
             </Field>
           </div>
 
           <Field label="Address">
-            <textarea
+            <Textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="input min-h-[60px] resize-y"
+              className="min-h-[60px] resize-y"
               placeholder="123 Main St, Mumbai, MH 400001"
             />
           </Field>
 
-          <div className="border-t border-slate-800 pt-3">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="border-t border-border pt-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Emergency contact
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Name">
-                <input
+                <Input
                   value={emergencyName}
                   onChange={(e) => setEmergencyName(e.target.value)}
-                  className="input"
                   placeholder="Sunita Kumar"
                 />
               </Field>
               <Field label="Phone">
-                <input
+                <Input
                   value={emergencyPhone}
                   onChange={(e) => setEmergencyPhone(e.target.value)}
-                  className="input"
                   placeholder="+91 98765 43211"
                 />
               </Field>
             </div>
             <Field label="Relation" className="mt-3">
-              <input
+              <Input
                 value={emergencyRelation}
                 onChange={(e) => setEmergencyRelation(e.target.value)}
-                className="input"
                 placeholder="Spouse / Mother / Father"
               />
             </Field>
           </div>
 
           <Field label="Allergies">
-            <textarea
+            <Textarea
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
-              className="input min-h-[40px] resize-y"
+              className="min-h-[40px] resize-y"
               placeholder="Penicillin, peanuts, ..."
             />
           </Field>
 
           <Field label="Medical history">
-            <textarea
+            <Textarea
               value={medicalHistory}
               onChange={(e) => setMedicalHistory(e.target.value)}
-              className="input min-h-[40px] resize-y"
+              className="min-h-[40px] resize-y"
               placeholder="Diabetes, hypertension, ..."
             />
           </Field>
@@ -372,10 +376,11 @@ export function PatientRegistrationForm({
       )}
 
       {/* Submit */}
-      <button
+      <Button
         type="submit"
         disabled={status === "checking-phone" || status === "submitting"}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+        className="w-full"
+        size="lg"
       >
         {status === "checking-phone" || status === "submitting" ? (
           <>
@@ -387,7 +392,7 @@ export function PatientRegistrationForm({
             <UserPlus className="size-4" /> Register Patient
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -407,9 +412,9 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1 block text-xs font-medium text-slate-400">
+      <Label className="mb-1 text-xs">
         {label} {required && <span className="text-red-400">*</span>}
-      </label>
+      </Label>
       {children}
     </div>
   );
