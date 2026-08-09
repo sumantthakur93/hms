@@ -48,6 +48,16 @@ export type Slot = {
 };
 
 /**
+ * Normalize a date string (YYYY-MM-DD) to UTC midnight.
+ * Prisma @db.Date stores dates as UTC midnight, so all date queries
+ * must use UTC midnight to match correctly regardless of server timezone.
+ */
+function toDateUTC(dateStr: string): Date {
+  const d = new Date(dateStr + "T00:00:00.000Z");
+  return d;
+}
+
+/**
  * Compute available time slots for a doctor on a given date.
  * - Generates slots from the doctor's ScheduleBlock for that day-of-week
  * - Returns empty if the date is blocked
@@ -59,8 +69,8 @@ export async function computeSlots(doctorId: string, date: string) {
     return { ok: false as const, error: "Unauthorized" };
   }
 
-  const dateObj = new Date(date + "T00:00:00");
-  const dayOfWeek = dateObj.getDay();
+  const dateObj = toDateUTC(date);
+  const dayOfWeek = dateObj.getUTCDay();
 
   // Check blocked dates
   const blocked = await prisma.blockedDate.findUnique({
@@ -139,7 +149,7 @@ export async function bookAppointment(input: BookAppointmentInput) {
     reason,
     patientId: inputPatientId,
   } = parsed.data;
-  const dateObj = new Date(date + "T00:00:00");
+  const dateObj = toDateUTC(date);
 
   // Determine patientId: patient uses their own, receptionist must specify
   let patientId: string;
@@ -247,7 +257,7 @@ export async function rescheduleAppointment(input: RescheduleInput) {
   }
 
   const { appointmentId, newDate, newStartTime, newEndTime } = parsed.data;
-  const newDateObj = new Date(newDate + "T00:00:00");
+  const newDateObj = toDateUTC(newDate);
 
   // Fetch the appointment to verify ownership + status
   const appointment = await prisma.appointment.findUnique({

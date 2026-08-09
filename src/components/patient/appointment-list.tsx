@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -51,6 +51,11 @@ export function AppointmentList({
   const [rescheduling, setRescheduling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [canceling, startCancel] = useTransition();
+
+  // Sync local state when server-refreshed props change (e.g. after reschedule)
+  useEffect(() => {
+    setAppointments(initial);
+  }, [initial]);
 
   function handleCancel(id: string) {
     setError(null);
@@ -187,7 +192,7 @@ function RescheduleForm({
     setDate(d);
     setSelectedSlot(null);
     setSlots([]);
-    const iso = d.toISOString().split("T")[0];
+    const iso = formatLocalDate(d);
     startLoading(async () => {
       const result = await computeSlots(appointment.doctorId, iso);
       if (result.ok) {
@@ -200,7 +205,7 @@ function RescheduleForm({
 
   function handleSubmit() {
     if (!date || !selectedSlot) return;
-    const iso = date.toISOString().split("T")[0];
+    const iso = formatLocalDate(date);
     setError(null);
     startSubmit(async () => {
       const result = await rescheduleAppointment({
@@ -331,4 +336,16 @@ function RescheduleForm({
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Format a Date as YYYY-MM-DD using local date components.
+ * Avoids toISOString() which shifts the date back by one day
+ * in timezones behind UTC (e.g. IST +5:30).
+ */
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }

@@ -101,7 +101,7 @@ export function BookingWizard({
 
   // Load slots when doctor + date selected
   function loadSlots(doctorId: string, date: Date) {
-    const iso = date.toISOString().split("T")[0];
+    const iso = formatLocalDate(date);
     startLoading(async () => {
       const result = await computeSlots(doctorId, iso);
       if (result.ok) {
@@ -138,7 +138,7 @@ export function BookingWizard({
 
   function handleConfirm() {
     if (!selectedDoctor || !selectedDate || !selectedSlot) return;
-    const iso = selectedDate.toISOString().split("T")[0];
+    const iso = formatLocalDate(selectedDate);
     setError(null);
     startBooking(async () => {
       const result = await bookAppointment({
@@ -601,4 +601,16 @@ function isDateBlocked(date: Date, blockedDates: { date: Date }[]): boolean {
   return blockedDates.some(
     (bd) => new Date(bd.date).toDateString() === dateStr,
   );
+}
+
+/**
+ * Format a Date as YYYY-MM-DD using local date components.
+ * Avoids toISOString() which shifts the date back by one day
+ * in timezones behind UTC (e.g. IST +5:30).
+ */
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
