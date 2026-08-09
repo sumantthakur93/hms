@@ -95,3 +95,17 @@ _Avoid_: Line item, charge
 **Dispensing**:
 The act of issuing medicines from pharmacy inventory against a Prescription. Performed by the Receptionist. Each Prescription Item is dispensed separately, decrementing Medicine Batch stock via FEFO. Creates an audit trail and links to billing.
 _Avoid_: Filling (US pharmacy term), issuing
+
+### Access Control
+
+**Route Guard**:
+Middleware-level check that verifies a User's Role against the route prefix before the page loads. Each role has its own route prefix (/admin/*, /doctor/*, /patient/*, /receptionist/*, /lab/*). Prevents unauthorized users from seeing pages they shouldn't access. UX layer only — not the security boundary.
+_Avoid_: Route protection, page guard
+
+**Server Action Guard**:
+Data-level check inside every server action that verifies both Role and ownership before executing a database operation. The real security boundary — enforces that a Doctor can only query their own patients, a Patient can only see their own records. Implemented as inline WHERE clauses in Prisma queries, not hidden middleware.
+_Avoid_: API guard, data guard
+
+**Ownership**:
+The rule that a user can only access resources they are linked to. A Doctor owns Consultations they created and Patients they have Appointments with. A Patient owns their own records. Enforced by including the user's profileId or patientId in every query's WHERE clause.
+_Avoid_: Data scoping, row-level access
