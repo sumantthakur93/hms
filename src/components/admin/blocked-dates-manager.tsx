@@ -176,12 +176,7 @@ function BlockedDateForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="blocked-date">Date</Label>
-        <DatePicker
-          id="blocked-date"
-          value={date}
-          onChange={setDate}
-          required
-        />
+        <DatePicker id="blocked-date" value={date} onChange={setDate} />
       </div>
 
       <div className="space-y-1.5">

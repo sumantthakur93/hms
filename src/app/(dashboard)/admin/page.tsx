@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getDoctors } from "@/actions/schedule";
@@ -26,7 +27,9 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      <DoctorScheduleManager doctors={doctors} />
+      <Suspense fallback={null}>
+        <DoctorScheduleManager doctors={doctors} />
+      </Suspense>
     </div>
   );
 }

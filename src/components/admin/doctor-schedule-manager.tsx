@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Stethoscope,
   Calendar,
@@ -33,12 +34,29 @@ type Doctor = {
 };
 
 export function DoctorScheduleManager({ doctors }: { doctors: Doctor[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(
-    doctors[0]?.id ?? null,
-  );
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const queryDoctor = searchParams.get("doctor");
+  const initialId =
+    (queryDoctor && doctors.some((d) => d.id === queryDoctor)
+      ? queryDoctor
+      : null) ??
+    doctors[0]?.id ??
+    null;
+
+  const [selectedId, setSelectedId] = useState<string | null>(initialId);
   const [tab, setTab] = useState<"schedule" | "blocked">("schedule");
 
   const selected = doctors.find((d) => d.id === selectedId);
+
+  function selectDoctor(id: string) {
+    setSelectedId(id);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("doctor", id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   if (doctors.length === 0) {
     return (
@@ -62,7 +80,7 @@ export function DoctorScheduleManager({ doctors }: { doctors: Doctor[] }) {
           <Button
             key={d.id}
             variant={selectedId === d.id ? "default" : "outline"}
-            onClick={() => setSelectedId(d.id)}
+            onClick={() => selectDoctor(d.id)}
             className="flex w-full items-center gap-3 justify-start h-auto py-3 font-normal"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
