@@ -388,13 +388,30 @@ model MedicineBatch {
   expiryDate  DateTime @map("expiry_date") @db.Date
   quantity    Int
 
-  medicine Medicine @relation(fields: [medicineId], references: [id])
+  medicine     Medicine          @relation(fields: [medicineId], references: [id])
+  adjustments  StockAdjustment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([medicineId, batchNumber])
   @@map("medicine_batches")
+}
+
+model StockAdjustment {
+  id        String @id @default(cuid())
+  batchId   String @map("batch_id")
+  oldQty    Int    @map("old_qty")
+  newQty    Int    @map("new_qty")
+  reason    String
+  notes     String? @db.Text
+  userId    String  @map("user_id")
+
+  batch MedicineBatch @relation(fields: [batchId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("stock_adjustments")
 }
 
 // ─── Billing ───────────────────────────────────────────────────────────────────

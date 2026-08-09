@@ -61,6 +61,11 @@ import {
   Download04Icon,
   Upload04Icon,
   ArrowLeft01Icon as ArrowLeft01IconRaw,
+  Package01Icon,
+  RupeeIcon,
+  Layers01Icon,
+  BanIcon,
+  AlertCircleIcon as AlertTriangleIcon,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = {
@@ -151,3 +156,8 @@ export const Clock = makeIcon(Clock01Icon);
 export const ArrowLeft = makeIcon(ArrowLeft01IconRaw);
 export const Download = makeIcon(Download04Icon);
 export const Upload = makeIcon(Upload04Icon);
+export const Package = makeIcon(Package01Icon);
+export const IndianRupee = makeIcon(RupeeIcon);
+export const Layers = makeIcon(Layers01Icon);
+export const Ban = makeIcon(BanIcon);
+export const AlertTriangle = makeIcon(AlertTriangleIcon);
