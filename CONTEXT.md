@@ -139,3 +139,9 @@ _Avoid_: Function, action, command
 **Deep Link**:
 A clickable link to a specific application page, included in a chatbot response when a task is better handled in the UI. Tool responses include a `link` field when applicable. Used for: clinical write actions, complex forms, detailed views (patient timeline, inventory, invoice adjustment). Bridges the chatbot experience to the full application UX.
 _Avoid_: Redirect, navigation link
+
+### Design
+
+**Dark Mode (always)**:
+The entire application — landing page, dashboards, auth pages, chatbot — is dark mode only. No light mode, no theme toggle. Surfaces use slate-900/950, text slate-100/300, primary blue-600, accent teal-500. Decided in #10 (dashboard prototype verdict). Light mode is out of scope for the MVP and beyond.
+_Avoid_: Theme switcher, dark theme toggle, color scheme preference

@@ -1,5 +1,9 @@
 # HMS - Agent Configuration
 
+## Standing preferences
+
+- **Dark mode only.** No light mode, no theme toggle anywhere. Use slate-900/950 surfaces, slate-100/300 text, blue-600 primary, teal-500 accent. Decided in #10.
+
 ## Agent skills
 
 ### Issue tracker
