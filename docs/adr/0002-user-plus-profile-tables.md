@@ -1,0 +1,3 @@
+# Separate User table from role-specific profile tables
+
+The User table holds only authentication data (email, password, name, role). Role-specific fields live in separate profile tables: DoctorProfile (specialization, license number, department), and future profiles for other roles as needed. Patient is NOT a profile table — it's a standalone entity (see ADR-0001). This was chosen over a single wide User table because the fields per role are completely different, a wide table would be mostly null columns, and it keeps the auth boundary clean. The trade-off is an extra join when loading role-specific data alongside auth data.

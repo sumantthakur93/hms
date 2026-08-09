@@ -1,0 +1,3 @@
+# Appointment and Consultation are separate entities
+
+An Appointment represents a scheduled time slot (date, time, doctor, patient, status). A Consultation is the clinical record created when the Doctor actually sees the Patient. An Appointment has zero or one Consultation — zero for cancellations and no-shows. This was chosen over merging them into a single entity because scheduling concerns (availability, conflicts, cancellation) are completely separate from clinical concerns (symptoms, diagnosis, vitals, prescriptions), and a cancelled appointment should not carry clinical fields. The trade-off is two tables and a join, but it cleanly separates the receptionist's scheduling world from the doctor's clinical world.

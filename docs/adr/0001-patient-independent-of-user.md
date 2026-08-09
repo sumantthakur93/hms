@@ -1,0 +1,3 @@
+# Patient exists independently of User
+
+A Patient record can exist without a User account. Receptionists create Patient records for walk-ins using only a phone number and demographics — no email or password required. A User with role PATIENT links to an existing Patient record, with phone number as the matching key. This was chosen over requiring every Patient to have login credentials because Indian hospital walk-ins often don't have or want an app account, and forcing account creation at the front desk slows down registration. The trade-off is a linking step when a walk-in later self-registers, and the need to treat phone number as a quasi-unique identifier (with conflict resolution if two Patients share a phone).
