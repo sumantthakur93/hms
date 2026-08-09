@@ -59,6 +59,7 @@ import {
   UserCheck01Icon,
   UserRemove01Icon,
   Download04Icon,
+  Upload04Icon,
   ArrowLeft01Icon as ArrowLeft01IconRaw,
 } from "@hugeicons/core-free-icons";
 
@@ -149,3 +150,4 @@ export const CalendarDots = makeIcon(CalendarCheckIn01Icon);
 export const Clock = makeIcon(Clock01Icon);
 export const ArrowLeft = makeIcon(ArrowLeft01IconRaw);
 export const Download = makeIcon(Download04Icon);
+export const Upload = makeIcon(Upload04Icon);
