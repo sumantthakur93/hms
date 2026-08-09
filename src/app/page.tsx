@@ -1,26 +1,86 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
-  Heart, Brain, Bone, Baby, Stethoscope, Eye, Ear, Activity,
-  CalendarPlus, FileText, FlaskConical, Pill,
-  Receipt, FolderOpen, Phone, Mail, MapPin, Clock,
-  ArrowRight, ChevronRight, CheckCircle2, Shield, Users, Building2,
+  Heart,
+  Brain,
+  Bone,
+  Baby,
+  Stethoscope,
+  Eye,
+  Ear,
+  Activity,
+  CalendarPlus,
+  FileText,
+  FlaskConical,
+  Pill,
+  Receipt,
+  FolderOpen,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  ArrowRight,
+  ChevronRight,
+  CheckCircle2,
+  Shield,
+  Users,
+  Building2,
   Search,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/lib/site-config";
 import { LandingNav } from "@/components/landing/landing-nav";
+import { auth } from "@/auth";
+
+const ROLE_DASHBOARD: Record<string, string> = {
+  ADMIN: "/admin",
+  DOCTOR: "/doctor",
+  PATIENT: "/patient",
+  RECEPTIONIST: "/receptionist",
+  LAB_TECHNICIAN: "/lab",
+};
 
 // Fallback data when DB is empty (pre-seed)
 const FALLBACK_DEPARTMENTS = [
-  { id: "cardiology", name: "Cardiology", description: "Comprehensive heart care, from diagnostics to advanced surgical interventions." },
-  { id: "neurology", name: "Neurology", description: "Expert treatment for neurological and brain disorders." },
-  { id: "orthopedics", name: "Orthopedics", description: "Advanced joint replacement and sports injury treatments." },
-  { id: "pediatrics", name: "Pediatrics", description: "Compassionate care for infants, children, and adolescents." },
-  { id: "general-medicine", name: "General Medicine", description: "Primary healthcare for everyday illnesses and preventive care." },
-  { id: "dermatology", name: "Dermatology", description: "Skin, hair, and nail care with advanced dermatological treatments." },
+  {
+    id: "cardiology",
+    name: "Cardiology",
+    description:
+      "Comprehensive heart care, from diagnostics to advanced surgical interventions.",
+  },
+  {
+    id: "neurology",
+    name: "Neurology",
+    description: "Expert treatment for neurological and brain disorders.",
+  },
+  {
+    id: "orthopedics",
+    name: "Orthopedics",
+    description: "Advanced joint replacement and sports injury treatments.",
+  },
+  {
+    id: "pediatrics",
+    name: "Pediatrics",
+    description: "Compassionate care for infants, children, and adolescents.",
+  },
+  {
+    id: "general-medicine",
+    name: "General Medicine",
+    description:
+      "Primary healthcare for everyday illnesses and preventive care.",
+  },
+  {
+    id: "dermatology",
+    name: "Dermatology",
+    description:
+      "Skin, hair, and nail care with advanced dermatological treatments.",
+  },
 ];
 
-const DEPT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const DEPT_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   Cardiology: Heart,
   Neurology: Brain,
   Orthopedics: Bone,
@@ -33,12 +93,36 @@ const DEPT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 const SERVICES = [
-  { icon: CalendarPlus, title: "Appointment Booking", desc: "Book appointments online with your preferred doctor in minutes." },
-  { icon: FileText, title: "Digital Prescriptions", desc: "Access your prescriptions anytime, anywhere — no paper needed." },
-  { icon: FlaskConical, title: "Lab Reports Online", desc: "View and download your lab test results as soon as they're ready." },
-  { icon: Pill, title: "Pharmacy", desc: "In-house pharmacy with stock tracking and automatic dispensing." },
-  { icon: Receipt, title: "Billing & Insurance", desc: "Transparent invoicing with multiple payment options including UPI." },
-  { icon: FolderOpen, title: "Medical Records", desc: "Your complete medical history, securely stored and always accessible." },
+  {
+    icon: CalendarPlus,
+    title: "Appointment Booking",
+    desc: "Book appointments online with your preferred doctor in minutes.",
+  },
+  {
+    icon: FileText,
+    title: "Digital Prescriptions",
+    desc: "Access your prescriptions anytime, anywhere — no paper needed.",
+  },
+  {
+    icon: FlaskConical,
+    title: "Lab Reports Online",
+    desc: "View and download your lab test results as soon as they're ready.",
+  },
+  {
+    icon: Pill,
+    title: "Pharmacy",
+    desc: "In-house pharmacy with stock tracking and automatic dispensing.",
+  },
+  {
+    icon: Receipt,
+    title: "Billing & Insurance",
+    desc: "Transparent invoicing with multiple payment options including UPI.",
+  },
+  {
+    icon: FolderOpen,
+    title: "Medical Records",
+    desc: "Your complete medical history, securely stored and always accessible.",
+  },
 ];
 
 const STATS = [
@@ -49,9 +133,21 @@ const STATS = [
 ];
 
 const STEPS = [
-  { icon: Search, title: "Find a Doctor", desc: "Browse departments and choose a specialist that fits your needs." },
-  { icon: CalendarPlus, title: "Book Appointment", desc: "Select a convenient time slot and confirm your appointment instantly." },
-  { icon: CheckCircle2, title: "Get Consultation", desc: "Visit the hospital, check in, and receive expert medical care." },
+  {
+    icon: Search,
+    title: "Find a Doctor",
+    desc: "Browse departments and choose a specialist that fits your needs.",
+  },
+  {
+    icon: CalendarPlus,
+    title: "Book Appointment",
+    desc: "Select a convenient time slot and confirm your appointment instantly.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Get Consultation",
+    desc: "Visit the hospital, check in, and receive expert medical care.",
+  },
 ];
 
 const TRUST_BADGES = [
@@ -63,16 +159,31 @@ const TRUST_BADGES = [
 const brandName = (siteConfig.name ?? "CarePoint Hospital").split(" ")[0];
 
 export default async function LandingPage() {
+  // Redirect authenticated users to their role dashboard
+  const session = await auth();
+  if (session?.user?.role) {
+    const dest = ROLE_DASHBOARD[session.user.role];
+    if (dest) redirect(dest);
+  }
+
   // Fetch live data — public reads, no auth required
   let departments = FALLBACK_DEPARTMENTS;
-  let doctors: { id: string; name: string; specialization: string; deptName: string }[] = [];
+  let doctors: {
+    id: string;
+    name: string;
+    specialization: string;
+    deptName: string;
+  }[] = [];
 
   try {
     const [deptRows, docRows] = await Promise.all([
       prisma.department.findMany({ take: 6, orderBy: { name: "asc" } }),
       prisma.doctorProfile.findMany({
         take: 4,
-        include: { user: { select: { name: true } }, department: { select: { name: true } } },
+        include: {
+          user: { select: { name: true } },
+          department: { select: { name: true } },
+        },
       }),
     ]);
 
@@ -80,7 +191,8 @@ export default async function LandingPage() {
       departments = deptRows.map((d) => ({
         id: d.id,
         name: d.name,
-        description: d.description ?? "Expert care from experienced specialists.",
+        description:
+          d.description ?? "Expert care from experienced specialists.",
       }));
     }
 
@@ -118,7 +230,9 @@ export default async function LandingPage() {
                     className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 backdrop-blur"
                   >
                     <badge.icon className="size-3.5 text-teal-400" />
-                    <span className="text-xs font-medium text-slate-300">{badge.label}</span>
+                    <span className="text-xs font-medium text-slate-300">
+                      {badge.label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -161,7 +275,9 @@ export default async function LandingPage() {
                 className="flex flex-col items-center rounded-xl border border-slate-800 bg-slate-900 p-6 text-center transition-colors hover:border-teal-500/50"
               >
                 <stat.icon className="mb-3 size-6 text-teal-400" />
-                <span className="text-2xl font-bold text-slate-100">{stat.value}</span>
+                <span className="text-2xl font-bold text-slate-100">
+                  {stat.value}
+                </span>
                 <span className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
                   {stat.label}
                 </span>
@@ -171,12 +287,18 @@ export default async function LandingPage() {
         </section>
 
         {/* 3. DEPARTMENTS */}
-        <section id="departments" className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+        <section
+          id="departments"
+          className="mx-auto max-w-7xl px-4 py-20 md:px-8"
+        >
           <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">Centers of Excellence</h2>
+              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+                Centers of Excellence
+              </h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-400">
-                Specialized care delivered by leading experts utilizing advanced technology.
+                Specialized care delivered by leading experts utilizing advanced
+                technology.
               </p>
             </div>
           </div>
@@ -190,15 +312,21 @@ export default async function LandingPage() {
                   key={dept.id}
                   href={`/login?redirect=/book&dept=${dept.id}`}
                   className={`group flex flex-col justify-between rounded-xl border p-6 transition-all hover:border-blue-500/50 ${
-                    isFeatured ? "border-slate-700 bg-slate-800/50 md:col-span-2" : "border-slate-800 bg-slate-900"
+                    isFeatured
+                      ? "border-slate-700 bg-slate-800/50 md:col-span-2"
+                      : "border-slate-800 bg-slate-900"
                   }`}
                 >
                   <div>
                     <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
                       <Icon className="size-6" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-100">{dept.name}</h3>
-                    <p className="mt-2 text-sm text-slate-400">{dept.description}</p>
+                    <h3 className="text-lg font-semibold text-slate-100">
+                      {dept.name}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-400">
+                      {dept.description}
+                    </p>
                   </div>
                   <div className="mt-4 flex items-center gap-1 text-sm font-medium text-blue-400">
                     Learn More
@@ -211,10 +339,15 @@ export default async function LandingPage() {
         </section>
 
         {/* 4. DOCTORS */}
-        <section id="doctors" className="border-y border-slate-800 bg-slate-900/30 px-4 py-20 md:px-8">
+        <section
+          id="doctors"
+          className="border-y border-slate-800 bg-slate-900/30 px-4 py-20 md:px-8"
+        >
           <div className="mx-auto max-w-7xl">
             <div className="mb-10">
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">Meet Our Doctors</h2>
+              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+                Meet Our Doctors
+              </h2>
               <p className="mt-2 text-sm text-slate-400">
                 Experienced specialists dedicated to your health and well-being.
               </p>
@@ -231,19 +364,41 @@ export default async function LandingPage() {
                     <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-800 text-xl font-bold text-blue-400">
                       {doc.name[0] ?? "D"}
                     </div>
-                    <h3 className="text-base font-semibold text-slate-100">{doc.name}</h3>
-                    <p className="mt-1 text-sm text-teal-400">{doc.specialization}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{doc.deptName}</p>
+                    <h3 className="text-base font-semibold text-slate-100">
+                      {doc.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-teal-400">
+                      {doc.specialization}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {doc.deptName}
+                    </p>
                   </Link>
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { name: "Dr. Rajesh Mehta", spec: "Cardiologist", dept: "Cardiology" },
-                  { name: "Dr. Priya Iyer", spec: "Neurologist", dept: "Neurology" },
-                  { name: "Dr. Vikram Singh", spec: "Orthopedic Surgeon", dept: "Orthopedics" },
-                  { name: "Dr. Anjali Sharma", spec: "Pediatrician", dept: "Pediatrics" },
+                  {
+                    name: "Dr. Rajesh Mehta",
+                    spec: "Cardiologist",
+                    dept: "Cardiology",
+                  },
+                  {
+                    name: "Dr. Priya Iyer",
+                    spec: "Neurologist",
+                    dept: "Neurology",
+                  },
+                  {
+                    name: "Dr. Vikram Singh",
+                    spec: "Orthopedic Surgeon",
+                    dept: "Orthopedics",
+                  },
+                  {
+                    name: "Dr. Anjali Sharma",
+                    spec: "Pediatrician",
+                    dept: "Pediatrics",
+                  },
                 ].map((doc) => (
                   <div
                     key={doc.name}
@@ -252,7 +407,9 @@ export default async function LandingPage() {
                     <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-800 text-xl font-bold text-blue-400">
                       {doc.name[4]}
                     </div>
-                    <h3 className="text-base font-semibold text-slate-100">{doc.name}</h3>
+                    <h3 className="text-base font-semibold text-slate-100">
+                      {doc.name}
+                    </h3>
                     <p className="mt-1 text-sm text-teal-400">{doc.spec}</p>
                     <p className="mt-0.5 text-xs text-slate-500">{doc.dept}</p>
                   </div>
@@ -265,7 +422,9 @@ export default async function LandingPage() {
         {/* 5. SERVICES */}
         <section id="services" className="mx-auto max-w-7xl px-4 py-20 md:px-8">
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">Our Services</h2>
+            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+              Our Services
+            </h2>
             <p className="mt-2 text-sm text-slate-400">
               Comprehensive healthcare services, all under one roof.
             </p>
@@ -280,7 +439,9 @@ export default async function LandingPage() {
                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-teal-950/40 text-teal-400">
                   <service.icon className="size-6" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-100">{service.title}</h3>
+                <h3 className="text-base font-semibold text-slate-100">
+                  {service.title}
+                </h3>
                 <p className="mt-2 text-sm text-slate-400">{service.desc}</p>
               </div>
             ))}
@@ -291,7 +452,9 @@ export default async function LandingPage() {
         <section className="border-y border-slate-800 bg-slate-900/30 px-4 py-20 md:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 text-center">
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">How It Works</h2>
+              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+                How It Works
+              </h2>
               <p className="mt-2 text-sm text-slate-400">
                 Getting started is simple — three easy steps.
               </p>
@@ -299,7 +462,10 @@ export default async function LandingPage() {
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               {STEPS.map((step, i) => (
-                <div key={step.title} className="relative flex flex-col items-center text-center">
+                <div
+                  key={step.title}
+                  className="relative flex flex-col items-center text-center"
+                >
                   {/* Connecting line */}
                   {i < STEPS.length - 1 && (
                     <div className="absolute left-1/2 top-8 hidden h-0.5 w-full bg-slate-700 md:block" />
@@ -310,8 +476,12 @@ export default async function LandingPage() {
                   <span className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
                     Step {i + 1}
                   </span>
-                  <h3 className="text-lg font-semibold text-slate-100">{step.title}</h3>
-                  <p className="mt-2 max-w-xs text-sm text-slate-400">{step.desc}</p>
+                  <h3 className="text-lg font-semibold text-slate-100">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 max-w-xs text-sm text-slate-400">
+                    {step.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -321,7 +491,9 @@ export default async function LandingPage() {
         {/* 7. CONTACT */}
         <section id="contact" className="mx-auto max-w-7xl px-4 py-20 md:px-8">
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">Get in Touch</h2>
+            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+              Get in Touch
+            </h2>
             <p className="mt-2 text-sm text-slate-400">
               Have questions? We&apos;re here to help.
             </p>
@@ -336,7 +508,9 @@ export default async function LandingPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-200">Phone</p>
-                  <p className="text-sm text-slate-400">{siteConfig.contact.phone}</p>
+                  <p className="text-sm text-slate-400">
+                    {siteConfig.contact.phone}
+                  </p>
                 </div>
               </div>
 
@@ -346,7 +520,9 @@ export default async function LandingPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-200">Email</p>
-                  <p className="text-sm text-slate-400">{siteConfig.contact.email}</p>
+                  <p className="text-sm text-slate-400">
+                    {siteConfig.contact.email}
+                  </p>
                 </div>
               </div>
 
@@ -355,8 +531,12 @@ export default async function LandingPage() {
                   <MapPin className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">Address</p>
-                  <p className="text-sm text-slate-400">{siteConfig.contact.address}</p>
+                  <p className="text-sm font-semibold text-slate-200">
+                    Address
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {siteConfig.contact.address}
+                  </p>
                 </div>
               </div>
 
@@ -365,9 +545,15 @@ export default async function LandingPage() {
                   <Clock className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">Operating Hours</p>
-                  <p className="text-sm text-slate-400">{siteConfig.hours.weekday}</p>
-                  <p className="text-sm text-slate-400">{siteConfig.hours.weekend}</p>
+                  <p className="text-sm font-semibold text-slate-200">
+                    Operating Hours
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {siteConfig.hours.weekday}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {siteConfig.hours.weekend}
+                  </p>
                 </div>
               </div>
             </div>
@@ -376,7 +562,9 @@ export default async function LandingPage() {
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <form className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">Name</label>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                    Name
+                  </label>
                   <input
                     type="text"
                     placeholder="Your full name"
@@ -384,7 +572,9 @@ export default async function LandingPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">Phone</label>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                    Phone
+                  </label>
                   <input
                     type="tel"
                     placeholder="+91 98765 43210"
@@ -392,7 +582,9 @@ export default async function LandingPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">Message</label>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                    Message
+                  </label>
                   <textarea
                     rows={4}
                     placeholder="How can we help you?"
@@ -420,29 +612,70 @@ export default async function LandingPage() {
                   <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
                     {brandName[0]}
                   </div>
-                  <span className="font-bold text-blue-400">{siteConfig.name}</span>
+                  <span className="font-bold text-blue-400">
+                    {siteConfig.name}
+                  </span>
                 </div>
-                <p className="mt-3 max-w-xs text-sm text-slate-500">{siteConfig.tagline}</p>
+                <p className="mt-3 max-w-xs text-sm text-slate-500">
+                  {siteConfig.tagline}
+                </p>
               </div>
 
               {/* Quick links */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">Quick Links</h4>
+                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                  Quick Links
+                </h4>
                 <ul className="space-y-2">
-                  <li><a href="#departments" className="text-sm text-slate-500 hover:text-teal-400">Departments</a></li>
-                  <li><a href="#doctors" className="text-sm text-slate-500 hover:text-teal-400">Doctors</a></li>
-                  <li><a href="#services" className="text-sm text-slate-500 hover:text-teal-400">Services</a></li>
-                  <li><a href="#contact" className="text-sm text-slate-500 hover:text-teal-400">Contact</a></li>
+                  <li>
+                    <a
+                      href="#departments"
+                      className="text-sm text-slate-500 hover:text-teal-400"
+                    >
+                      Departments
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#doctors"
+                      className="text-sm text-slate-500 hover:text-teal-400"
+                    >
+                      Doctors
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#services"
+                      className="text-sm text-slate-500 hover:text-teal-400"
+                    >
+                      Services
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#contact"
+                      className="text-sm text-slate-500 hover:text-teal-400"
+                    >
+                      Contact
+                    </a>
+                  </li>
                 </ul>
               </div>
 
               {/* Departments */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">Departments</h4>
+                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                  Departments
+                </h4>
                 <ul className="space-y-2">
                   {departments.slice(0, 5).map((d) => (
                     <li key={d.id}>
-                      <a href="#departments" className="text-sm text-slate-500 hover:text-teal-400">{d.name}</a>
+                      <a
+                        href="#departments"
+                        className="text-sm text-slate-500 hover:text-teal-400"
+                      >
+                        {d.name}
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -450,18 +683,27 @@ export default async function LandingPage() {
 
               {/* Contact */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">Contact</h4>
+                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                  Contact
+                </h4>
                 <ul className="space-y-2">
-                  <li className="text-sm text-slate-500">{siteConfig.contact.phone}</li>
-                  <li className="text-sm text-slate-500">{siteConfig.contact.email}</li>
-                  <li className="text-sm text-slate-500">{siteConfig.contact.address}</li>
+                  <li className="text-sm text-slate-500">
+                    {siteConfig.contact.phone}
+                  </li>
+                  <li className="text-sm text-slate-500">
+                    {siteConfig.contact.email}
+                  </li>
+                  <li className="text-sm text-slate-500">
+                    {siteConfig.contact.address}
+                  </li>
                 </ul>
               </div>
             </div>
 
             <div className="mt-10 border-t border-slate-800 pt-6 text-center">
               <p className="text-xs text-slate-600">
-                © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+                © {new Date().getFullYear()} {siteConfig.name}. All rights
+                reserved.
               </p>
             </div>
           </div>

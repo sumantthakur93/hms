@@ -28,10 +28,11 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
-  // Public routes — no auth required
+  // Auth routes and landing page — always public
   if (
     pathname === "/" ||
     pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
     pathname.startsWith("/api/auth")
   ) {
     return;
@@ -49,7 +50,7 @@ export default auth((req) => {
     if (pathname.startsWith(prefix) && session.user.role !== requiredRole) {
       // Redirect to the user's own dashboard
       const userPrefix = Object.entries(roleRouteMap).find(
-        ([, role]) => role === session.user.role
+        ([, role]) => role === session.user.role,
       )?.[0];
       return Response.redirect(new URL(userPrefix ?? "/", req.url));
     }

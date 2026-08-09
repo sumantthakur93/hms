@@ -1,13 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import authConfig from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 hours — aligned with hospital shifts
@@ -38,7 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const isValid = await verifyPassword(
           credentials.password as string,
-          user.password
+          user.password,
         );
 
         if (!isValid) {
@@ -56,28 +55,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.profileId = user.profileId;
-        token.patientId = user.patientId;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.role = token.role as
-          | "ADMIN"
-          | "DOCTOR"
-          | "PATIENT"
-          | "RECEPTIONIST"
-          | "LAB_TECHNICIAN";
-        session.user.profileId = token.profileId as string | undefined;
-        session.user.patientId = token.patientId as string | undefined;
-      }
-      return session;
-    },
-  },
 });
