@@ -58,6 +58,8 @@ import {
   Hospital01Icon,
   UserCheck01Icon,
   UserRemove01Icon,
+  Download04Icon,
+  ArrowLeft01Icon as ArrowLeft01IconRaw,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = {
@@ -145,3 +147,5 @@ export const Hospital = makeIcon(Hospital01Icon);
 export const Calendar = makeIcon(CalendarCheckIn01Icon);
 export const CalendarDots = makeIcon(CalendarCheckIn01Icon);
 export const Clock = makeIcon(Clock01Icon);
+export const ArrowLeft = makeIcon(ArrowLeft01IconRaw);
+export const Download = makeIcon(Download04Icon);
