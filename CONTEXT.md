@@ -59,11 +59,11 @@ _Avoid_: Time slot (use just "Slot"), window
 ### Clinical
 
 **Consultation**:
-The clinical record created when a Doctor sees a Patient during an Appointment. Contains symptoms, diagnosis, notes, and structured vitals (blood pressure, heart rate, temperature, weight, SpO2, blood sugar). An Appointment has zero or one Consultation.
+The clinical record created when a Doctor sees a Patient during a CHECKED_IN Appointment. Contains symptoms, diagnosis, notes, structured vitals, and an optional follow-up date. An Appointment has zero or one Consultation (zero for cancellation/no-show). One Prescription and zero or more Lab Test Orders may be created within a Consultation. Editable for 24 hours after completion, then locked. The Doctor views the Patient's history as tabbed panels (Past Consultations, Prescriptions, Lab Results, Patient Info) alongside the Consultation form. All fields are optional — the only required action is completing.
 _Avoid_: Visit, encounter, session
 
 **Prescription**:
-A medication order created during a Consultation. Standalone entity linked to a Consultation, containing one or more Prescription Items. Can be viewed, printed, and tracked independently.
+A medication order created during a Consultation. One Prescription per Consultation, containing one or more Prescription Items. Can be viewed, printed as PDF (with hospital letterhead), and tracked independently. Editable within the 24-hour Consultation edit window, only if items have not been dispensed.
 _Avoid_: Script, Rx, medication order
 
 **Prescription Item**:
@@ -73,7 +73,7 @@ _Avoid_: Prescription line, medicine entry
 ### Lab
 
 **Lab Test Order**:
-A request for a laboratory test, created by a Doctor (during or outside a Consultation). Specifies the test type, patient, priority, and instructions. States: ORDERED → SAMPLE_COLLECTED → PROCESSING → COMPLETED. May also reach CANCELLED (before sample collection).
+A recommendation for a laboratory test, created by a Doctor during or outside a Consultation. Specifies the test type, patient, priority (Normal/Urgent), and instructions. Carries an isInternal flag: when true, the order flows to the hospital's Lab Technician queue and progresses through states (ORDERED → SAMPLE_COLLECTED → PROCESSING → COMPLETED, or CANCELLED before sample collection). When false, it is an external recommendation — recorded for the Patient's medical history but not tracked through internal lab states.
 _Avoid_: Test request, lab request
 
 **Lab Result**:
