@@ -87,12 +87,16 @@ _Avoid_: Test template, test definition
 ### Pharmacy
 
 **Medicine**:
-A master-data entry for a type of medicine (e.g., Paracetamol 500mg). Holds name, generic name, manufacturer, category, unit price.
+A master-data entry for a type of medicine (e.g., Paracetamol 500mg). Holds name, generic name, manufacturer, category, unit price, reorder level (low-stock threshold), and active flag for soft deletion. Managed by Admin.
 _Avoid_: Drug, medication (when referring to the master data)
 
 **Medicine Batch**:
-A specific batch of a Medicine with batch number, expiry date, and quantity in stock. Dispensing follows FEFO (First Expiry, First Out).
+A specific batch of a Medicine with batch number, expiry date, and quantity in stock. Created by Admin when new stock is received. Expired batches (expiryDate <= today) are automatically excluded from dispensing and stock counts but retained for audit. Dispensing follows FEFO (First Expiry, First Out) with automatic batch selection — may split across multiple batches if needed. Admin can adjust quantity with a logged reason (damage, recount).
 _Avoid_: Stock entry, inventory item
+
+**Low Stock Alert**:
+A visual indicator on the Admin dashboard when a Medicine's total non-expired stock across all batches drops to or below its reorder level. No email/SMS or auto-ordering — informational only.
+_Avoid_: Reorder alert, stock warning
 
 ### Billing
 
