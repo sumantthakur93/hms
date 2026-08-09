@@ -15,12 +15,16 @@ One of five access levels assigned to a User: ADMIN, DOCTOR, PATIENT, RECEPTIONI
 _Avoid_: Permission level, user type
 
 **Patient**:
-A person receiving medical care. Exists independently of a User account — a Receptionist can create a Patient record for a walk-in without credentials. A User with role PATIENT links to exactly one Patient record. Holds demographics, medical history, allergies, emergency contact. Identified by phone number (linking key for self-registration) and a system-generated MRN.
+A person receiving medical care. Exists independently of a User account. Two registration paths: (A) Receptionist creates record for walk-in (name, phone required, demographics optional), (B) self-registration via Sign Up with phone-based linking to existing records. Holds: first name, last name, phone (required), email, date of birth, gender, blood group, address, emergency contact (name, phone, relationship), allergies (free text), medical history notes (free text). Editable by Patient (own, except MRN), Receptionist, and Admin. Searchable by name, phone, or MRN. Duplicate phone warning on creation (warn but allow — family members may share a phone).
 _Avoid_: Client, case
 
 **MRN (Medical Record Number)**:
-A unique, system-generated identifier for every Patient. Used for internal reference across the hospital. Not the database ID — a human-readable code (e.g., MRN-00001).
+A unique, system-generated, immutable identifier for every Patient. Used for internal reference across the hospital. Not the database ID — a human-readable code (e.g., MRN-00001). Never editable after creation.
 _Avoid_: Patient ID (ambiguous with database ID), case number
+
+**Patient Timeline**:
+A reverse-chronological view of a Patient's medical history: Consultations, Prescriptions, Lab Results, and Appointments. Each entry is expandable. Filterable by type. Shown as tabbed panels during Consultation (see Consultation). Provides the Doctor with a complete clinical picture.
+_Avoid_: Medical history (ambiguous with the free-text field), patient record
 
 **DoctorProfile**:
 Role-specific data for a User with role DOCTOR: specialization, license number, department assignment.
