@@ -239,6 +239,7 @@ model Appointment {
   patient      Patient       @relation(fields: [patientId], references: [id])
   doctor       DoctorProfile @relation(fields: [doctorId], references: [id])
   consultation Consultation?
+  invoices     Invoice[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -420,14 +421,16 @@ model Invoice {
   id              String        @id @default(cuid())
   invoiceNumber   String        @unique @map("invoice_number") // INV-2025-00001
   patientId       String        @map("patient_id")
+  appointmentId   String?       @map("appointment_id")
   status          InvoiceStatus @default(DRAFT)
   totalAmount     Float         @map("total_amount")
   paymentMethod   PaymentMethod? @map("payment_method")
   transactionRef  String?       @map("transaction_ref")
   paidAt          DateTime?     @map("paid_at")
 
-  patient Patient       @relation(fields: [patientId], references: [id])
-  items   InvoiceItem[]
+  patient    Patient       @relation(fields: [patientId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  items      InvoiceItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

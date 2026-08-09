@@ -66,6 +66,10 @@ import {
   Layers01Icon,
   BanIcon,
   AlertCircleIcon as AlertTriangleIcon,
+  SentIcon,
+  BanknoteIcon,
+  CreditCardIcon,
+  PrinterIcon,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = {
@@ -161,3 +165,7 @@ export const IndianRupee = makeIcon(RupeeIcon);
 export const Layers = makeIcon(Layers01Icon);
 export const Ban = makeIcon(BanIcon);
 export const AlertTriangle = makeIcon(AlertTriangleIcon);
+export const Send = makeIcon(SentIcon);
+export const Banknote = makeIcon(BanknoteIcon);
+export const CreditCard = makeIcon(CreditCardIcon);
+export const Printer = makeIcon(PrinterIcon);
