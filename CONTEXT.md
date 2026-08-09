@@ -77,11 +77,11 @@ A recommendation for a laboratory test, created by a Doctor during or outside a 
 _Avoid_: Test request, lab request
 
 **Lab Result**:
-The outcome of a completed Lab Test Order, recorded by a Lab Technician. May include structured data fields and/or uploaded files. Visible to the ordering Doctor, the Patient, any Doctor who later consults the Patient, and Admin.
+The outcome of a Lab Test Order. For internal orders, recorded by a Lab Technician with structured data (JSON array of parameter/value/unit/referenceRange), optional notes, and optional file uploads. For external orders, a file (PDF/image) uploaded by the Patient, Doctor, or Receptionist. Visible to the ordering Doctor, the Patient, any Doctor who later consults the Patient, and Admin.
 _Avoid_: Test result, report
 
 **Test Type**:
-A master-data entry defining a kind of laboratory test (e.g., Complete Blood Count, Lipid Panel). Managed by Admin.
+A master-data entry defining a kind of laboratory test (e.g., Complete Blood Count, Lipid Panel). Holds name, short code, category (Hematology, Biochemistry, etc.), price, optional description, and an active flag for soft deletion. Managed by Admin. Doctors search from active Test Types when ordering.
 _Avoid_: Test template, test definition
 
 ### Pharmacy
