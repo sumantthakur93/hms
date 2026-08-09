@@ -26,11 +26,16 @@ import {
   Users,
   Building2,
   Search,
-} from "lucide-react";
+} from "@/components/ui/icon";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/lib/site-config";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { auth } from "@/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 
 const ROLE_DASHBOARD: Record<string, string> = {
   ADMIN: "/admin",
@@ -209,15 +214,15 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <LandingNav brand={brandName} />
 
       <main className="pt-16">
         {/* 1. HERO */}
         <section className="relative flex min-h-[80vh] items-center overflow-hidden px-4 md:px-8">
           <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-slate-950 to-slate-950" />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
           </div>
 
           <div className="relative z-10 mx-auto w-full max-w-7xl">
@@ -227,61 +232,61 @@ export default async function LandingPage() {
                 {TRUST_BADGES.map((badge) => (
                   <div
                     key={badge.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 backdrop-blur"
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1.5 backdrop-blur"
                   >
-                    <badge.icon className="size-3.5 text-teal-400" />
-                    <span className="text-xs font-medium text-slate-300">
+                    <badge.icon className="size-3.5 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">
                       {badge.label}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-100 md:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground md:text-5xl lg:text-6xl">
                 Your Health,
                 <br />
-                <span className="text-blue-400">Our Priority</span>
+                <span className="text-primary">Our Priority</span>
               </h1>
 
-              <p className="max-w-xl text-lg text-slate-300">
+              <p className="max-w-xl text-lg text-muted-foreground">
                 {siteConfig.description}
               </p>
 
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue-500"
-                >
+                <Button render={<Link href="/login" />} size="lg">
                   Book an Appointment
                   <ArrowRight className="size-4" />
-                </Link>
-                <a
-                  href="#departments"
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/50 px-6 py-3 text-sm font-semibold text-slate-200 backdrop-blur transition-all hover:bg-slate-800"
+                </Button>
+                <Button
+                  render={<a href="#departments" />}
+                  variant="outline"
+                  size="lg"
                 >
                   Explore Departments
-                </a>
+                </Button>
               </div>
             </div>
           </div>
         </section>
 
         {/* 2. STATS */}
-        <section className="border-y border-slate-800 bg-slate-900/50 px-4 py-12 md:px-8">
+        <section className="border-y border-border bg-muted/30 px-4 py-12 md:px-8">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 md:grid-cols-4">
             {STATS.map((stat) => (
-              <div
+              <Card
                 key={stat.label}
-                className="flex flex-col items-center rounded-xl border border-slate-800 bg-slate-900 p-6 text-center transition-colors hover:border-teal-500/50"
+                className="items-center text-center hover:ring-primary/30"
               >
-                <stat.icon className="mb-3 size-6 text-teal-400" />
-                <span className="text-2xl font-bold text-slate-100">
-                  {stat.value}
-                </span>
-                <span className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  {stat.label}
-                </span>
-              </div>
+                <CardContent className="flex flex-col items-center p-6">
+                  <stat.icon className="mb-3 size-6 text-primary" />
+                  <span className="text-2xl font-bold text-foreground">
+                    {stat.value}
+                  </span>
+                  <span className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {stat.label}
+                  </span>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
@@ -293,10 +298,10 @@ export default async function LandingPage() {
         >
           <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+              <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                 Centers of Excellence
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-slate-400">
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 Specialized care delivered by leading experts utilizing advanced
                 technology.
               </p>
@@ -311,24 +316,22 @@ export default async function LandingPage() {
                 <Link
                   key={dept.id}
                   href={`/login?redirect=/book&dept=${dept.id}`}
-                  className={`group flex flex-col justify-between rounded-xl border p-6 transition-all hover:border-blue-500/50 ${
-                    isFeatured
-                      ? "border-slate-700 bg-slate-800/50 md:col-span-2"
-                      : "border-slate-800 bg-slate-900"
+                  className={`group flex flex-col justify-between rounded-xl border border-border bg-card p-6 transition-all hover:border-primary/50 ${
+                    isFeatured ? "md:col-span-2" : ""
                   }`}
                 >
                   <div>
-                    <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
+                    <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="size-6" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-100">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {dept.name}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-400">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       {dept.description}
                     </p>
                   </div>
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-blue-400">
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
                     Learn More
                     <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </div>
@@ -341,14 +344,14 @@ export default async function LandingPage() {
         {/* 4. DOCTORS */}
         <section
           id="doctors"
-          className="border-y border-slate-800 bg-slate-900/30 px-4 py-20 md:px-8"
+          className="border-y border-border bg-muted/20 px-4 py-20 md:px-8"
         >
           <div className="mx-auto max-w-7xl">
             <div className="mb-10">
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+              <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                 Meet Our Doctors
               </h2>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Experienced specialists dedicated to your health and well-being.
               </p>
             </div>
@@ -359,18 +362,18 @@ export default async function LandingPage() {
                   <Link
                     key={doc.id}
                     href={`/login?redirect=/book&doctor=${doc.id}`}
-                    className="group rounded-xl border border-slate-800 bg-slate-900 p-6 text-center transition-all hover:border-blue-500/50"
+                    className="group rounded-xl border border-border bg-card p-6 text-center transition-all hover:border-primary/50"
                   >
-                    <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-800 text-xl font-bold text-blue-400">
+                    <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-muted text-xl font-bold text-primary">
                       {doc.name[0] ?? "D"}
                     </div>
-                    <h3 className="text-base font-semibold text-slate-100">
+                    <h3 className="text-base font-semibold text-foreground">
                       {doc.name}
                     </h3>
-                    <p className="mt-1 text-sm text-teal-400">
+                    <p className="mt-1 text-sm text-primary">
                       {doc.specialization}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {doc.deptName}
                     </p>
                   </Link>
@@ -402,16 +405,18 @@ export default async function LandingPage() {
                 ].map((doc) => (
                   <div
                     key={doc.name}
-                    className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-center"
+                    className="rounded-xl border border-border bg-card p-6 text-center"
                   >
-                    <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-800 text-xl font-bold text-blue-400">
+                    <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-muted text-xl font-bold text-primary">
                       {doc.name[4]}
                     </div>
-                    <h3 className="text-base font-semibold text-slate-100">
+                    <h3 className="text-base font-semibold text-foreground">
                       {doc.name}
                     </h3>
-                    <p className="mt-1 text-sm text-teal-400">{doc.spec}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{doc.dept}</p>
+                    <p className="mt-1 text-sm text-primary">{doc.spec}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {doc.dept}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -422,40 +427,41 @@ export default async function LandingPage() {
         {/* 5. SERVICES */}
         <section id="services" className="mx-auto max-w-7xl px-4 py-20 md:px-8">
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
               Our Services
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Comprehensive healthcare services, all under one roof.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICES.map((service) => (
-              <div
-                key={service.title}
-                className="rounded-xl border border-slate-800 bg-slate-900 p-6 transition-all hover:border-blue-500/50"
-              >
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-teal-950/40 text-teal-400">
-                  <service.icon className="size-6" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-100">
-                  {service.title}
-                </h3>
-                <p className="mt-2 text-sm text-slate-400">{service.desc}</p>
-              </div>
+              <Card key={service.title} className="hover:ring-primary/30">
+                <CardContent className="p-6">
+                  <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <service.icon className="size-6" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    {service.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {service.desc}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
 
         {/* 6. HOW IT WORKS */}
-        <section className="border-y border-slate-800 bg-slate-900/30 px-4 py-20 md:px-8">
+        <section className="border-y border-border bg-muted/20 px-4 py-20 md:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 text-center">
-              <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+              <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                 How It Works
               </h2>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Getting started is simple — three easy steps.
               </p>
             </div>
@@ -468,18 +474,18 @@ export default async function LandingPage() {
                 >
                   {/* Connecting line */}
                   {i < STEPS.length - 1 && (
-                    <div className="absolute left-1/2 top-8 hidden h-0.5 w-full bg-slate-700 md:block" />
+                    <div className="absolute left-1/2 top-8 hidden h-0.5 w-full bg-border md:block" />
                   )}
-                  <div className="relative z-10 mb-4 flex size-16 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
+                  <div className="relative z-10 mb-4 flex size-16 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
                     <step.icon className="size-7" />
                   </div>
-                  <span className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
+                  <span className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
                     Step {i + 1}
                   </span>
-                  <h3 className="text-lg font-semibold text-slate-100">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {step.title}
                   </h3>
-                  <p className="mt-2 max-w-xs text-sm text-slate-400">
+                  <p className="mt-2 max-w-xs text-sm text-muted-foreground">
                     {step.desc}
                   </p>
                 </div>
@@ -491,10 +497,10 @@ export default async function LandingPage() {
         {/* 7. CONTACT */}
         <section id="contact" className="mx-auto max-w-7xl px-4 py-20 md:px-8">
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-slate-100 md:text-3xl">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
               Get in Touch
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Have questions? We&apos;re here to help.
             </p>
           </div>
@@ -503,55 +509,55 @@ export default async function LandingPage() {
             {/* Contact info */}
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Phone className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">Phone</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm font-semibold text-foreground">Phone</p>
+                  <p className="text-sm text-muted-foreground">
                     {siteConfig.contact.phone}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Mail className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">Email</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm font-semibold text-foreground">Email</p>
+                  <p className="text-sm text-muted-foreground">
                     {siteConfig.contact.email}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <MapPin className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-sm font-semibold text-foreground">
                     Address
                   </p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-muted-foreground">
                     {siteConfig.contact.address}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950/60 text-blue-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Clock className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-sm font-semibold text-foreground">
                     Operating Hours
                   </p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-muted-foreground">
                     {siteConfig.hours.weekday}
                   </p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-muted-foreground">
                     {siteConfig.hours.weekend}
                   </p>
                 </div>
@@ -559,78 +565,71 @@ export default async function LandingPage() {
             </div>
 
             {/* Contact form (visual only — no backend for MVP landing) */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-              <form className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Your full name"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                    Message
-                  </label>
-                  <textarea
-                    rows={4}
-                    placeholder="How can we help you?"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-500"
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <form className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contact-name">Name</Label>
+                    <Input
+                      id="contact-name"
+                      type="text"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contact-phone">Phone</Label>
+                    <Input
+                      id="contact-phone"
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contact-message">Message</Label>
+                    <Textarea
+                      id="contact-message"
+                      rows={4}
+                      placeholder="How can we help you?"
+                    />
+                  </div>
+                  <Button type="button" className="w-full" size="lg">
+                    Send Message
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
         {/* 8. FOOTER */}
-        <footer className="border-t border-slate-800 bg-slate-950 px-4 py-12 md:px-8">
+        <footer className="border-t border-border bg-background px-4 py-12 md:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
               {/* Brand */}
               <div className="col-span-2 md:col-span-1">
                 <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
                     {brandName[0]}
                   </div>
-                  <span className="font-bold text-blue-400">
+                  <span className="font-bold text-primary">
                     {siteConfig.name}
                   </span>
                 </div>
-                <p className="mt-3 max-w-xs text-sm text-slate-500">
+                <p className="mt-3 max-w-xs text-sm text-muted-foreground">
                   {siteConfig.tagline}
                 </p>
               </div>
 
               {/* Quick links */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                <h4 className="mb-3 text-sm font-semibold text-foreground">
                   Quick Links
                 </h4>
                 <ul className="space-y-2">
                   <li>
                     <a
                       href="#departments"
-                      className="text-sm text-slate-500 hover:text-teal-400"
+                      className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Departments
                     </a>
@@ -638,7 +637,7 @@ export default async function LandingPage() {
                   <li>
                     <a
                       href="#doctors"
-                      className="text-sm text-slate-500 hover:text-teal-400"
+                      className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Doctors
                     </a>
@@ -646,7 +645,7 @@ export default async function LandingPage() {
                   <li>
                     <a
                       href="#services"
-                      className="text-sm text-slate-500 hover:text-teal-400"
+                      className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Services
                     </a>
@@ -654,7 +653,7 @@ export default async function LandingPage() {
                   <li>
                     <a
                       href="#contact"
-                      className="text-sm text-slate-500 hover:text-teal-400"
+                      className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Contact
                     </a>
@@ -664,7 +663,7 @@ export default async function LandingPage() {
 
               {/* Departments */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                <h4 className="mb-3 text-sm font-semibold text-foreground">
                   Departments
                 </h4>
                 <ul className="space-y-2">
@@ -672,7 +671,7 @@ export default async function LandingPage() {
                     <li key={d.id}>
                       <a
                         href="#departments"
-                        className="text-sm text-slate-500 hover:text-teal-400"
+                        className="text-sm text-muted-foreground hover:text-primary"
                       >
                         {d.name}
                       </a>
@@ -683,25 +682,25 @@ export default async function LandingPage() {
 
               {/* Contact */}
               <div>
-                <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                <h4 className="mb-3 text-sm font-semibold text-foreground">
                   Contact
                 </h4>
                 <ul className="space-y-2">
-                  <li className="text-sm text-slate-500">
+                  <li className="text-sm text-muted-foreground">
                     {siteConfig.contact.phone}
                   </li>
-                  <li className="text-sm text-slate-500">
+                  <li className="text-sm text-muted-foreground">
                     {siteConfig.contact.email}
                   </li>
-                  <li className="text-sm text-slate-500">
+                  <li className="text-sm text-muted-foreground">
                     {siteConfig.contact.address}
                   </li>
                 </ul>
               </div>
             </div>
 
-            <div className="mt-10 border-t border-slate-800 pt-6 text-center">
-              <p className="text-xs text-slate-600">
+            <div className="mt-10 border-t border-border pt-6 text-center">
+              <p className="text-xs text-muted-foreground">
                 © {new Date().getFullYear()} {siteConfig.name}. All rights
                 reserved.
               </p>

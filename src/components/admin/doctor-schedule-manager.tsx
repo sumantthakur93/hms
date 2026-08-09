@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Stethoscope, Calendar, CalendarOff, ChevronRight } from "lucide-react";
+import {
+  Stethoscope,
+  Calendar,
+  CalendarOff,
+  ChevronRight,
+} from "@/components/ui/icon";
 import { ScheduleBlockManager } from "./schedule-block-form";
 import { BlockedDatesManager } from "./blocked-dates-manager";
 import { Button } from "@/components/ui/button";
@@ -149,7 +154,7 @@ function TabButton({
       onClick={onClick}
       className={`border-b-2 rounded-none ${
         active
-          ? "border-blue-600 text-blue-500"
+          ? "border-blue-600 text-primary"
           : "border-transparent text-muted-foreground hover:text-foreground"
       }`}
     >

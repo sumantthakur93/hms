@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,10 +55,10 @@ export function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-blue-600 text-2xl font-bold text-white">
+          <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-primary-foreground">
             C
           </div>
           <CardTitle className="text-xl">CarePoint Hospital</CardTitle>
@@ -69,7 +69,7 @@ export function LoginForm() {
 
         <CardContent className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-950/50 px-3 py-2 text-sm text-rose-300">
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="size-4 shrink-0" />
               {error}
             </div>
@@ -97,7 +97,7 @@ export function LoginForm() {
                   variant="link"
                   size="sm"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="h-auto p-0 text-xs text-slate-500"
+                  className="h-auto p-0 text-xs text-muted-foreground"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </Button>
@@ -141,16 +141,16 @@ export function LoginForm() {
           </form>
 
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-xs text-slate-600">or</span>
-            <div className="h-px flex-1 bg-slate-800" />
+            <div className="h-px flex-1 bg-muted" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-muted" />
           </div>
 
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"
-              className="font-semibold text-blue-400 hover:text-blue-300"
+              className="font-semibold text-primary hover:text-primary"
             >
               Create an account
             </Link>

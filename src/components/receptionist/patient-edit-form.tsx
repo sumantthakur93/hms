@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Loader2, AlertCircle, Lock } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  AlertCircle,
+  Lock,
+} from "@/components/ui/icon";
 import { updatePatient } from "@/actions/patients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,7 +195,10 @@ export function PatientEditForm({
         </div>
         <div className="space-y-1.5">
           <Label>Blood group</Label>
-          <Select value={bloodGroup} onValueChange={(v) => setBloodGroup(v ?? "")}>
+          <Select
+            value={bloodGroup}
+            onValueChange={(v) => setBloodGroup(v ?? "")}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select" />
             </SelectTrigger>

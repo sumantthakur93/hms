@@ -4,7 +4,12 @@ import { PatientSearch } from "@/components/receptionist/patient-search";
 import { PatientRegistrationForm } from "@/components/receptionist/patient-registration-form";
 import { PatientEditForm } from "@/components/receptionist/patient-edit-form";
 import { getPatient } from "@/actions/patients";
-import { UserPlus, Search, Edit3, X } from "lucide-react";
+import {
+  UserPlus,
+  Search,
+  Edit3,
+  X,
+} from "@/components/ui/icon";
 
 export default async function ReceptionistDashboard({
   searchParams,
@@ -27,10 +32,10 @@ export default async function ReceptionistDashboard({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-100">
+        <h1 className="text-2xl font-bold text-foreground">
           Receptionist Dashboard
         </h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted-foreground">
           Register patients, search records, and manage demographics
         </p>
       </div>
@@ -39,10 +44,10 @@ export default async function ReceptionistDashboard({
         {/* Left: Search + Registration */}
         <div className="space-y-6">
           {/* Patient Search */}
-          <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <section className="rounded-xl border border-border bg-card/50 p-5">
             <div className="mb-4 flex items-center gap-2">
-              <Search className="size-5 text-blue-500" />
-              <h2 className="text-lg font-semibold text-slate-100">
+              <Search className="size-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Patient Search
               </h2>
             </div>
@@ -50,10 +55,10 @@ export default async function ReceptionistDashboard({
           </section>
 
           {/* Walk-in Registration */}
-          <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <section className="rounded-xl border border-border bg-card/50 p-5">
             <div className="mb-4 flex items-center gap-2">
-              <UserPlus className="size-5 text-blue-500" />
-              <h2 className="text-lg font-semibold text-slate-100">
+              <UserPlus className="size-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Walk-in Registration
               </h2>
             </div>
@@ -64,17 +69,17 @@ export default async function ReceptionistDashboard({
         {/* Right: Edit panel or placeholder */}
         <div>
           {editPatient?.ok ? (
-            <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+            <section className="rounded-xl border border-border bg-card/50 p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Edit3 className="size-5 text-blue-500" />
-                  <h2 className="text-lg font-semibold text-slate-100">
+                  <Edit3 className="size-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">
                     Edit Patient
                   </h2>
                 </div>
                 <a
                   href="/receptionist"
-                  className="text-slate-500 hover:text-slate-300"
+                  className="text-muted-foreground hover:text-muted-foreground"
                 >
                   <X className="size-4" />
                 </a>
@@ -82,9 +87,12 @@ export default async function ReceptionistDashboard({
               <PatientEditForm patient={editPatient.patient} />
             </section>
           ) : (
-            <section className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-900/30 p-5 text-center">
-              <Search className="mb-3 size-8 text-slate-700" />
-              <p className="text-sm text-slate-500">
+            <section className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/30 p-5 text-center">
+              <Search
+                className="mb-3 size-8 text-muted-foreground"
+               
+              />
+              <p className="text-sm text-muted-foreground">
                 Search for a patient above and select them to edit their
                 demographics
               </p>

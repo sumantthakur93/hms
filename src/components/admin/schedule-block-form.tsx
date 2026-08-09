@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Pencil, Loader2, AlertCircle, X } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  Loader2,
+  AlertCircle,
+  X,
+} from "@/components/ui/icon";
 import {
   createScheduleBlock,
   updateScheduleBlock,

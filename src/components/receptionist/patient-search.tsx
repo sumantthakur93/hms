@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2, User } from "lucide-react";
+import { Search, Loader2, User } from "@/components/ui/icon";
 import { searchPatients } from "@/actions/patients";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

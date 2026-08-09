@@ -8,7 +8,7 @@ import {
   Loader2,
   AlertCircle,
   X,
-} from "lucide-react";
+} from "@/components/ui/icon";
 import { addBlockedDate, removeBlockedDate } from "@/actions/schedule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

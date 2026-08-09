@@ -15,7 +15,7 @@ import {
   Clock,
   HeartPulse,
   Check,
-} from "lucide-react";
+} from "@/components/ui/icon";
 import {
   signupPatient,
   checkDuplicatePhone,
@@ -150,12 +150,12 @@ export function SignupForm() {
 
   if (success) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md p-8 text-center">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-green-600">
-            <Check className="size-6 text-white" />
+            <Check className="size-6 text-primary-foreground" />
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-slate-100">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
             {success}
           </h2>
           <Button render={<Link href="/login" />} className="mt-4">
@@ -167,24 +167,24 @@ export function SignupForm() {
   }
 
   return (
-    <main className="flex min-h-screen bg-slate-950">
+    <main className="flex min-h-screen bg-background">
       {/* Left: form */}
       <div className="flex w-full flex-col items-center justify-center p-4 lg:w-1/2">
         <Card className="w-full max-w-md p-6 sm:p-8">
           <div className="mb-6 flex flex-col items-center gap-2">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground">
               C
             </div>
-            <h1 className="text-lg font-bold text-slate-100">
+            <h1 className="text-lg font-bold text-foreground">
               Create Your Account
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Sign up as a patient at CarePoint Hospital
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-950/50 px-3 py-2 text-sm text-rose-300">
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="size-4 shrink-0" />
               {error}
             </div>
@@ -195,7 +195,7 @@ export function SignupForm() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>
-                  First name <span className="text-rose-400">*</span>
+                  First name <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   required
@@ -205,7 +205,7 @@ export function SignupForm() {
               </div>
               <div className="space-y-1.5">
                 <Label>
-                  Last name <span className="text-rose-400">*</span>
+                  Last name <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   required
@@ -217,7 +217,7 @@ export function SignupForm() {
 
             <div className="space-y-1.5">
               <Label>
-                Phone <span className="text-rose-400">*</span>
+                Phone <span className="text-destructive">*</span>
               </Label>
               <div className="flex">
                 <span className="inline-flex items-center rounded-l-lg border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
@@ -279,7 +279,7 @@ export function SignupForm() {
 
             <div className="space-y-1.5">
               <Label>
-                Email <span className="text-rose-400">*</span>
+                Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 required
@@ -292,7 +292,7 @@ export function SignupForm() {
 
             <div className="space-y-1.5">
               <Label>
-                Password <span className="text-rose-400">*</span>
+                Password <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -330,7 +330,7 @@ export function SignupForm() {
                 </div>
               )}
               {password && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {pwStrength.label}
                 </p>
               )}
@@ -338,7 +338,7 @@ export function SignupForm() {
 
             <div className="space-y-1.5">
               <Label>
-                Confirm password <span className="text-rose-400">*</span>
+                Confirm password <span className="text-destructive">*</span>
               </Label>
               <Input
                 required
@@ -347,7 +347,7 @@ export function SignupForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               {confirmPassword && password !== confirmPassword && (
-                <p className="mt-1 text-xs text-rose-400">
+                <p className="mt-1 text-xs text-destructive">
                   Passwords do not match.
                 </p>
               )}
@@ -369,7 +369,7 @@ export function SignupForm() {
             </Button>
 
             {showOptional && (
-              <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-800/30 p-3">
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Date of birth</Label>
@@ -483,11 +483,11 @@ export function SignupForm() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-slate-400">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-blue-400 hover:text-blue-300"
+              className="font-semibold text-primary hover:text-primary"
             >
               Sign in
             </Link>
@@ -496,50 +496,50 @@ export function SignupForm() {
       </div>
 
       {/* Right: value props (desktop only) */}
-      <div className="hidden flex-col justify-center gap-8 bg-gradient-to-br from-slate-900 to-slate-950 p-12 lg:flex lg:w-1/2">
+      <div className="hidden flex-col justify-center gap-8 bg-gradient-to-br from-card to-background p-12 lg:flex lg:w-1/2">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100">
+          <h2 className="text-2xl font-bold text-foreground">
             Your health, one click away
           </h2>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-muted-foreground">
             Book appointments, view prescriptions, check lab results, and chat
             with our AI assistant — all in one place.
           </p>
         </div>
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950">
-              <Clock className="size-5 text-blue-400" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <Clock className="size-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-200">
+              <h3 className="font-semibold text-foreground">
                 24/7 Appointment Booking
               </h3>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Book anytime, from anywhere. No more waiting on hold.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950">
-              <ShieldCheck className="size-5 text-blue-400" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <ShieldCheck className="size-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-200">Secure & Private</h3>
-              <p className="text-sm text-slate-500">
+              <h3 className="font-semibold text-foreground">Secure & Private</h3>
+              <p className="text-sm text-muted-foreground">
                 Your medical records are encrypted and role-access controlled.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-950">
-              <HeartPulse className="size-5 text-blue-400" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <HeartPulse className="size-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-200">
+              <h3 className="font-semibold text-foreground">
                 AI Health Assistant
               </h3>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Get instant answers about your prescriptions, lab results, and
                 appointments.
               </p>
@@ -564,8 +564,8 @@ function getPasswordStrength(pw: string): {
 
   const labels = ["Too short", "Weak", "Fair", "Good", "Strong"];
   const colors = [
-    "bg-rose-500",
-    "bg-rose-500",
+    "bg-destructive",
+    "bg-destructive",
     "bg-amber-500",
     "bg-blue-500",
     "bg-green-500",

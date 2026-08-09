@@ -25,7 +25,7 @@ import {
   MoreHorizontal,
   Menu,
   X,
-} from "lucide-react";
+} from "@/components/ui/icon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -94,20 +94,20 @@ export function DashboardShell({
   const moreItems = navItems.slice(4);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen bg-background text-foreground">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col border-r border-slate-800 bg-slate-900 transition-all lg:flex",
+          "hidden shrink-0 flex-col border-r border-border bg-sidebar transition-all lg:flex",
           collapsed ? "w-16" : "w-60",
         )}
       >
-        <div className="flex h-16 items-center gap-2 border-b border-slate-800 px-4">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
+        <div className="flex h-16 items-center gap-2 border-b border-border px-4">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
             {brand[0] ?? "C"}
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold text-blue-400">{brand}</span>
+            <span className="text-lg font-bold text-primary">{brand}</span>
           )}
         </div>
 
@@ -122,28 +122,33 @@ export function DashboardShell({
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium",
                   active
-                    ? "bg-blue-950/60 text-blue-400"
-                    : "text-slate-400 hover:bg-slate-800",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                 )}
               >
-                <Icon className="size-4 shrink-0" />
+                <Icon
+                  className="size-4 shrink-0"
+                 
+                />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t border-slate-800 p-3">
+        <div className="border-t border-border p-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-slate-400">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
               {(userName || roleLabel)[0]}
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-200">
+                <p className="truncate text-sm font-medium text-foreground">
                   {userName || roleLabel}
                 </p>
-                <p className="truncate text-xs text-slate-500">{userEmail}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {userEmail}
+                </p>
               </div>
             )}
           </div>
@@ -153,7 +158,7 @@ export function DashboardShell({
       {/* Main */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-16 items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 md:px-6">
+        <header className="flex h-16 items-center gap-4 border-b border-border bg-card px-4 md:px-6">
           {/* Sidebar toggle (desktop) */}
           <Button
             variant="outline"
@@ -180,19 +185,19 @@ export function DashboardShell({
             <Menu className="size-5" />
           </Button>
 
-          <h2 className="text-sm font-semibold text-slate-300">
+          <h2 className="text-sm font-semibold text-foreground">
             {roleLabel} Dashboard
           </h2>
 
           {/* Search (desktop) */}
-          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-slate-800 px-3 py-1.5 text-sm text-slate-500 md:flex">
+          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground md:flex">
             <Search className="size-4" /> Search…
           </div>
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="size-4" />
-            <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-rose-500" />
+            <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />
           </Button>
 
           {/* User dropdown */}
@@ -202,26 +207,30 @@ export function DashboardShell({
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 p-1"
             >
-              <div className="flex size-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-slate-400">
+              <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                 {(userName || roleLabel)[0]}
               </div>
               <div className="hidden text-left sm:block">
-                <p className="text-xs font-medium text-slate-200">{userName}</p>
-                <p className="text-xs text-slate-500">{roleLabel}</p>
+                <p className="text-xs font-medium text-foreground">
+                  {userName}
+                </p>
+                <p className="text-xs text-muted-foreground">{roleLabel}</p>
               </div>
             </Button>
 
             {userMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-800 bg-slate-900 py-1 shadow-xl">
-                <div className="border-b border-slate-800 px-3 py-2">
-                  <p className="truncate text-sm font-medium text-slate-200">
+              <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover py-1 shadow-xl">
+                <div className="border-b border-border px-3 py-2">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {userName}
                   </p>
-                  <p className="truncate text-xs text-slate-500">{userEmail}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {userEmail}
+                  </p>
                 </div>
                 <Link
                   href="/api/auth/signout"
-                  className="mt-1 flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                  className="mt-1 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                   onClick={() => setUserMenuOpen(false)}
                 >
                   <LogOut className="size-4" />
@@ -244,13 +253,13 @@ export function DashboardShell({
             className="absolute inset-0 bg-black/60"
             onClick={() => setMobileNavOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-64 border-r border-slate-800 bg-slate-900">
-            <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
+          <div className="absolute left-0 top-0 h-full w-64 border-r border-border bg-sidebar">
+            <div className="flex h-16 items-center justify-between border-b border-border px-4">
               <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
                   {brand[0] ?? "C"}
                 </div>
-                <span className="text-lg font-bold text-blue-400">{brand}</span>
+                <span className="text-lg font-bold text-primary">{brand}</span>
               </div>
               <Button
                 variant="ghost"
@@ -272,11 +281,14 @@ export function DashboardShell({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium",
                       active
-                        ? "bg-blue-950/60 text-blue-400"
-                        : "text-slate-400 hover:bg-slate-800",
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    <Icon
+                      className="size-4 shrink-0"
+                     
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -287,7 +299,7 @@ export function DashboardShell({
       )}
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-slate-800 bg-slate-900 px-2 py-1.5 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border bg-card px-2 py-1.5 lg:hidden">
         {topItems.map((item) => {
           const Icon = ICONS[item.icon] ?? LayoutDashboard;
           const active = pathname === item.href;
@@ -297,7 +309,7 @@ export function DashboardShell({
               href={item.href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-xs",
-                active ? "text-blue-400" : "text-slate-500",
+                active ? "text-primary" : "text-muted-foreground",
               )}
             >
               <Icon className="size-5" />
@@ -310,7 +322,7 @@ export function DashboardShell({
           <Button
             variant="ghost"
             onClick={() => setMoreOpen(true)}
-            className="flex flex-1 flex-col items-center gap-0.5 py-1 text-xs text-slate-500 h-auto"
+            className="flex flex-1 flex-col items-center gap-0.5 py-1 text-xs text-muted-foreground h-auto"
           >
             <MoreHorizontal className="size-5" />
             <span>More</span>
@@ -325,9 +337,9 @@ export function DashboardShell({
             className="absolute inset-0 bg-black/60"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-xl border-t border-slate-800 bg-slate-900 pb-4">
-            <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-              <h3 className="text-sm font-semibold text-slate-200">More</h3>
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-xl border-t border-border bg-card pb-4">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <h3 className="text-sm font-semibold text-foreground">More</h3>
               <Button
                 variant="ghost"
                 size="icon"
@@ -348,11 +360,14 @@ export function DashboardShell({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
                       active
-                        ? "bg-blue-950/60 text-blue-400"
-                        : "text-slate-400 hover:bg-slate-800",
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    <Icon
+                      className="size-4 shrink-0"
+                     
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );

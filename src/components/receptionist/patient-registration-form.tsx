@@ -9,7 +9,7 @@ import {
   ChevronDown,
   Phone,
   CalendarPlus,
-} from "lucide-react";
+} from "@/components/ui/icon";
 import { createPatient, type PatientInput } from "@/actions/patients";
 import { checkDuplicatePhone as checkDuplicate } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -142,12 +142,12 @@ export function PatientRegistrationForm({
           <CheckCircle2 className="size-7 text-green-500" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-slate-100">
+          <h3 className="text-lg font-semibold text-foreground">
             Patient Registered
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             MRN:{" "}
-            <span className="font-mono font-semibold text-blue-400">
+            <span className="font-mono font-semibold text-primary">
               {createdMrn}
             </span>
           </p>
