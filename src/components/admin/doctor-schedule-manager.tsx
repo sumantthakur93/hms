@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Stethoscope,
   Calendar,
   CalendarOff,
   ChevronRight,
+  Loader2,
 } from "@/components/ui/icon";
 import { ScheduleBlockManager } from "./schedule-block-form";
 import { BlockedDatesManager } from "./blocked-dates-manager";
@@ -37,6 +38,7 @@ export function DoctorScheduleManager({ doctors }: { doctors: Doctor[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   const queryDoctor = searchParams.get("doctor");
   const initialId =
@@ -55,7 +57,13 @@ export function DoctorScheduleManager({ doctors }: { doctors: Doctor[] }) {
     setSelectedId(id);
     const params = new URLSearchParams(searchParams.toString());
     params.set("doctor", id);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const url = `${pathname}?${params.toString()}`;
+    // Update URL immediately
+    window.history.replaceState(null, "", url);
+    // Trigger server refresh in background
+    startTransition(() => {
+      router.replace(url, { scroll: false });
+    });
   }
 
   if (doctors.length === 0) {
@@ -101,7 +109,12 @@ export function DoctorScheduleManager({ doctors }: { doctors: Doctor[] }) {
 
       {/* Detail panel */}
       {selected && (
-        <div className="space-y-4">
+        <div className="relative space-y-4">
+          {isPending && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
+              <Loader2 className="size-6 animate-spin text-primary" />
+            </div>
+          )}
           {/* Doctor header */}
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="text-lg font-semibold text-foreground">
