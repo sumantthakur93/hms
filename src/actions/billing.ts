@@ -432,3 +432,53 @@ export async function setLabOrderInternal(
 
   return { ok: true as const, order: updated };
 }
+
+/**
+ * Get lab orders for completed appointments that need internal/external classification.
+ * Returns lab orders where isInternal is false (the default) and the consultation is completed.
+ * Receptionist/Admin only.
+ */
+export async function getLabOrdersForClassification() {
+  const session = await auth();
+  requireRole(session, "RECEPTIONIST", "ADMIN");
+
+  const labOrders = await prisma.labTestOrder.findMany({
+    where: {
+      isInternal: false,
+      consultationId: { not: null },
+      consultation: {
+        completedAt: { not: null },
+      },
+    },
+    include: {
+      testType: { select: { name: true, code: true } },
+      consultation: {
+        include: {
+          patient: {
+            select: { id: true, mrn: true, firstName: true, lastName: true },
+          },
+          appointment: { select: { id: true, date: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  return {
+    ok: true as const,
+    labOrders: labOrders
+      .filter((l) => l.consultation !== null)
+      .map((l) => ({
+        id: l.id,
+        status: l.status,
+        priority: l.priority,
+        createdAt: l.createdAt,
+        testName: l.testType.name,
+        testCode: l.testType.code,
+        patientName: `${l.consultation!.patient.firstName} ${l.consultation!.patient.lastName}`,
+        patientMrn: l.consultation!.patient.mrn,
+        appointmentId: l.consultation!.appointment.id,
+      })),
+  };
+}

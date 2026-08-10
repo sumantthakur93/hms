@@ -228,10 +228,12 @@ export function MedicineDetail({ medicineId }: { medicineId: string }) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Pencil className="size-4" />
-            Edit
-          </Button>
+          <Link href={`/admin/medicines/${medicine.id}/edit`}>
+            <Button variant="outline" size="sm">
+              <Pencil className="size-4" />
+              Edit
+            </Button>
+          </Link>
           {medicine.active && (
             <Button variant="outline" size="sm" onClick={handleDeactivate}>
               <Ban className="size-4" />

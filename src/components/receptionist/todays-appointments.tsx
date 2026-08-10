@@ -254,9 +254,24 @@ export function TodaysAppointments({
                       </Button>
                     )}
                     {apt.status === "COMPLETED" && (
-                      <span className="text-xs text-muted-foreground">
-                        Invoice → T10
-                      </span>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/receptionist/dispense/${apt.id}`)
+                          }
+                        >
+                          Dispense
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push("/receptionist/billing")}
+                        >
+                          Generate Invoice
+                        </Button>
+                      </>
                     )}
                   </div>
                 </td>

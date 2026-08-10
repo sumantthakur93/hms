@@ -58,7 +58,10 @@ function isExpired(expiryDate: Date): boolean {
 
 function isNearExpiry(expiryDate: Date): boolean {
   const days30 = 30 * 24 * 60 * 60 * 1000;
-  return !isExpired(expiryDate) && new Date(expiryDate).getTime() - Date.now() < days30;
+  return (
+    !isExpired(expiryDate) &&
+    new Date(expiryDate).getTime() - Date.now() < days30
+  );
 }
 
 function batchStatus(expiryDate: Date): "FRESH" | "NEAR_EXPIRY" | "EXPIRED" {
@@ -106,9 +109,16 @@ export async function getMedicines(opts?: {
     const nonExpiredBatches = med.batches.filter(
       (b) => !isExpired(b.expiryDate),
     );
-    const totalStock = nonExpiredBatches.reduce((sum, b) => sum + b.quantity, 0);
+    const totalStock = nonExpiredBatches.reduce(
+      (sum, b) => sum + b.quantity,
+      0,
+    );
     const stockStatus =
-      totalStock === 0 ? "OUT_OF_STOCK" : totalStock <= med.reorderLevel ? "LOW_STOCK" : "IN_STOCK";
+      totalStock === 0
+        ? "OUT_OF_STOCK"
+        : totalStock <= med.reorderLevel
+          ? "LOW_STOCK"
+          : "IN_STOCK";
     return {
       id: med.id,
       name: med.name,
@@ -378,7 +388,12 @@ export async function getLowStockMedicines() {
       const totalStock = med.batches
         .filter((b) => !isExpired(b.expiryDate))
         .reduce((sum, b) => sum + b.quantity, 0);
-      return { id: med.id, name: med.name, totalStock, reorderLevel: med.reorderLevel };
+      return {
+        id: med.id,
+        name: med.name,
+        totalStock,
+        reorderLevel: med.reorderLevel,
+      };
     })
     .filter((m) => m.totalStock <= m.reorderLevel);
 
@@ -393,7 +408,9 @@ export async function getLowStockMedicines() {
  * Marks prescription items as dispensed and reduces batch quantities.
  * Admin/Receptionist only.
  */
-export async function dispensePrescription(input: z.infer<typeof dispenseSchema>) {
+export async function dispensePrescription(
+  input: z.infer<typeof dispenseSchema>,
+) {
   const session = await auth();
   requireRole(session, "ADMIN", "RECEPTIONIST");
 
@@ -445,7 +462,11 @@ export async function dispensePrescription(input: z.infer<typeof dispenseSchema>
     const validBatches = batches.filter((b) => !isExpired(b.expiryDate));
 
     let remaining = item.quantity;
-    const allocations: Array<{ batchId: string; batchNumber: string; qty: number }> = [];
+    const allocations: Array<{
+      batchId: string;
+      batchNumber: string;
+      qty: number;
+    }> = [];
 
     for (const batch of validBatches) {
       if (remaining <= 0) break;
@@ -530,7 +551,12 @@ export async function previewDispense(prescriptionId: string) {
     itemId: string;
     medicineName: string;
     needed: number;
-    allocations: Array<{ batchId: string; batchNumber: string; expiryDate: Date; qty: number }>;
+    allocations: Array<{
+      batchId: string;
+      batchNumber: string;
+      expiryDate: Date;
+      qty: number;
+    }>;
     insufficient: boolean;
     dispensed: boolean;
   }> = [];
@@ -547,7 +573,12 @@ export async function previewDispense(prescriptionId: string) {
     const validBatches = batches.filter((b) => !isExpired(b.expiryDate));
 
     let remaining = item.quantity;
-    const allocations: Array<{ batchId: string; batchNumber: string; expiryDate: Date; qty: number }> = [];
+    const allocations: Array<{
+      batchId: string;
+      batchNumber: string;
+      expiryDate: Date;
+      qty: number;
+    }> = [];
 
     for (const batch of validBatches) {
       if (remaining <= 0) break;
@@ -572,4 +603,58 @@ export async function previewDispense(prescriptionId: string) {
   }
 
   return { ok: true as const, plan };
+}
+
+/**
+ * Get the prescription for a given appointment (for the dispense flow).
+ * Receptionist/Admin only. Returns the prescription ID and patient info.
+ */
+export async function getPrescriptionForAppointment(appointmentId: string) {
+  const session = await auth();
+  requireRole(session, "ADMIN", "RECEPTIONIST");
+
+  const consultation = await prisma.consultation.findUnique({
+    where: { appointmentId },
+    include: {
+      prescription: {
+        include: {
+          items: {
+            include: { medicine: { select: { name: true } } },
+          },
+        },
+      },
+      patient: {
+        select: { id: true, mrn: true, firstName: true, lastName: true },
+      },
+      appointment: { select: { date: true } },
+    },
+  });
+
+  if (!consultation) {
+    return {
+      ok: false as const,
+      error: "No consultation found for this appointment",
+    };
+  }
+
+  if (!consultation.prescription) {
+    return {
+      ok: false as const,
+      error: "No prescription found for this consultation",
+    };
+  }
+
+  const rx = consultation.prescription;
+  const allDispensed =
+    rx.items.length > 0 && rx.items.every((i) => i.dispensed);
+
+  return {
+    ok: true as const,
+    prescriptionId: rx.id,
+    patientName: `${consultation.patient.firstName} ${consultation.patient.lastName}`,
+    patientMrn: consultation.patient.mrn,
+    appointmentDate: consultation.appointment.date,
+    allDispensed,
+    itemCount: rx.items.length,
+  };
 }

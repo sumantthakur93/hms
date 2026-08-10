@@ -109,9 +109,10 @@ describe("TodaysAppointments", () => {
     expect(screen.getByText("No Show")).toBeInTheDocument();
   });
 
-  it("shows invoice placeholder for COMPLETED appointments", () => {
+  it("shows Generate Invoice and Dispense buttons for COMPLETED appointments", () => {
     render(<TodaysAppointments appointments={appointments} />);
-    expect(screen.getByText("Invoice → T10")).toBeInTheDocument();
+    expect(screen.getByText("Generate Invoice")).toBeInTheDocument();
+    expect(screen.getByText("Dispense")).toBeInTheDocument();
   });
 
   it("calls checkInAppointment when Check In is clicked", async () => {

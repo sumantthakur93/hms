@@ -70,6 +70,7 @@ export const NAV_PER_ROLE: Record<UserRole, NavItem[]> = {
       icon: "CalendarPlus",
     },
     { label: "Patients", href: "/receptionist/patients", icon: "Users" },
+    { label: "Lab Orders", href: "/receptionist/lab-orders", icon: "TestTube" },
     { label: "Billing", href: "/receptionist/billing", icon: "Receipt" },
     { label: "Chat", href: "/receptionist/chat", icon: "MessageSquare" },
   ],
