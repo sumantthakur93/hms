@@ -1,30 +1,17 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getReceptionistDashboardData } from "@/actions/dashboards";
-import { getPatient } from "@/actions/patients";
-import { PatientSearch } from "@/components/receptionist/patient-search";
-import { PatientRegistrationForm } from "@/components/receptionist/patient-registration-form";
-import { PatientEditForm } from "@/components/receptionist/patient-edit-form";
 import { ReceptionistDashboardStats } from "@/components/dashboard/receptionist-dashboard";
-import { UserPlus, Search, Edit3, X } from "@/components/ui/icon";
+import { UserPlus, CalendarPlus } from "@/components/ui/icon";
 
-export default async function ReceptionistDashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ edit?: string }>;
-}) {
+export default async function ReceptionistDashboard() {
   const session = await auth();
   if (!session?.user || session.user.role !== "RECEPTIONIST") {
     redirect("/admin");
   }
 
-  const params = await searchParams;
-  const editId = params.edit;
-
-  const [dashboardData, editPatient] = await Promise.all([
-    getReceptionistDashboardData(),
-    editId ? getPatient(editId) : Promise.resolve(null),
-  ]);
+  const dashboardData = await getReceptionistDashboardData();
 
   return (
     <div className="space-y-6">
@@ -33,68 +20,30 @@ export default async function ReceptionistDashboard({
           Receptionist Dashboard
         </h1>
         <p className="text-sm text-muted-foreground">
-          Register patients, manage appointments, and track billing
+          Today&apos;s summary and quick actions
         </p>
       </div>
 
-      {/* Dashboard stats */}
-      {dashboardData.ok && <ReceptionistDashboardStats data={dashboardData} />}
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Left: Search + Registration */}
-        <div className="space-y-6">
-          <section className="rounded-xl border border-border bg-card/50 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Search className="size-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">
-                Patient Search
-              </h2>
-            </div>
-            <PatientSearch />
-          </section>
-
-          <section className="rounded-xl border border-border bg-card/50 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <UserPlus className="size-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">
-                Walk-in Registration
-              </h2>
-            </div>
-            <PatientRegistrationForm />
-          </section>
-        </div>
-
-        {/* Right: Edit panel or placeholder */}
-        <div>
-          {editPatient?.ok ? (
-            <section className="rounded-xl border border-border bg-card/50 p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Edit3 className="size-5 text-primary" />
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Edit Patient
-                  </h2>
-                </div>
-                <a
-                  href="/receptionist"
-                  className="text-muted-foreground hover:text-muted-foreground"
-                >
-                  <X className="size-4" />
-                </a>
-              </div>
-              <PatientEditForm patient={editPatient.patient} />
-            </section>
-          ) : (
-            <section className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/30 p-5 text-center">
-              <Search className="mb-3 size-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Search for a patient above and select them to edit their
-                demographics
-              </p>
-            </section>
-          )}
-        </div>
+      {/* Quick action buttons */}
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/receptionist/patients"
+          className="inline-flex h-9 items-center gap-1.5 rounded-4xl bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/80"
+        >
+          <UserPlus className="size-4" />
+          Register Patient
+        </Link>
+        <Link
+          href="/receptionist/book"
+          className="inline-flex h-9 items-center gap-1.5 rounded-4xl border border-border bg-background px-3 text-sm font-medium hover:bg-muted hover:text-foreground"
+        >
+          <CalendarPlus className="size-4" />
+          Book Appointment
+        </Link>
       </div>
+
+      {/* Dashboard stats + today's appointments + recent invoices */}
+      {dashboardData.ok && <ReceptionistDashboardStats data={dashboardData} />}
     </div>
   );
 }

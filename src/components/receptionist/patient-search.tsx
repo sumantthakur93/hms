@@ -73,7 +73,7 @@ export function PatientSearch() {
             <Button
               key={p.id}
               variant="ghost"
-              onClick={() => router.push(`/receptionist?edit=${p.id}`)}
+              onClick={() => router.push(`/receptionist/patients?edit=${p.id}`)}
               className="flex w-full items-center gap-3 justify-start px-4 py-3 h-auto font-normal"
             >
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
