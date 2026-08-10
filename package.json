@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^1.0.0",
+    "@ai-sdk/react": "^4.0.61",
     "@auth/prisma-adapter": "^2.11.3",
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^3.9.0",

@@ -70,6 +70,7 @@ import {
   BanknoteIcon,
   CreditCardIcon,
   PrinterIcon,
+  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = {
@@ -169,3 +170,4 @@ export const Send = makeIcon(SentIcon);
 export const Banknote = makeIcon(BanknoteIcon);
 export const CreditCard = makeIcon(CreditCardIcon);
 export const Printer = makeIcon(PrinterIcon);
+export const Sparkles = makeIcon(SparklesIcon);
