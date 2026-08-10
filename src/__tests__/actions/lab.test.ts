@@ -11,6 +11,12 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    testType: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -27,6 +33,10 @@ import {
   saveDraftResults,
   submitResults,
   getCompletedTests,
+  createTestType,
+  updateTestType,
+  deactivateTestType,
+  getTestTypes,
 } from "@/actions/lab";
 
 const mockAuth = vi.mocked(auth) as unknown as {
@@ -232,7 +242,12 @@ describe("saveDraftResults", () => {
   const validInput = {
     labTestOrderId: "lt1",
     results: [
-      { parameter: "Hemoglobin", value: "14.5", unit: "g/dL", referenceRange: "13-17" },
+      {
+        parameter: "Hemoglobin",
+        value: "14.5",
+        unit: "g/dL",
+        referenceRange: "13-17",
+      },
     ],
     notes: "Normal results",
   };
@@ -314,7 +329,12 @@ describe("submitResults", () => {
   const validInput = {
     labTestOrderId: "lt1",
     results: [
-      { parameter: "Hemoglobin", value: "14.5", unit: "g/dL", referenceRange: "13-17" },
+      {
+        parameter: "Hemoglobin",
+        value: "14.5",
+        unit: "g/dL",
+        referenceRange: "13-17",
+      },
     ],
     notes: "Normal results",
   };
@@ -391,5 +411,251 @@ describe("getCompletedTests", () => {
   it("rejects non-lab roles", async () => {
     mockAuth.mockResolvedValue(patientSession());
     await expect(getCompletedTests()).rejects.toThrow("Unauthorized");
+  });
+});
+
+// ─── Admin session helper ─────────────────────────────────────────────────────
+
+function adminSession() {
+  return {
+    user: {
+      id: "admin-id",
+      role: "ADMIN" as const,
+      name: "Admin",
+      email: "admin@carepoint.in",
+    },
+    expires: new Date().toISOString(),
+  } as any;
+}
+
+// ─── getTestTypes ─────────────────────────────────────────────────────────────
+
+describe("getTestTypes", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.testType.findMany).mockReset();
+  });
+
+  it("returns all test types for admin", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.findMany).mockResolvedValue([
+      {
+        id: "t1",
+        name: "CBC",
+        code: "CBC",
+        category: "Hematology",
+        price: 300,
+        active: true,
+      },
+    ] as any);
+
+    const result = await getTestTypes();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.testTypes).toHaveLength(1);
+  });
+
+  it("rejects non-admin", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    const result = await getTestTypes();
+    expect(result.ok).toBe(false);
+  });
+});
+
+// ─── createTestType ───────────────────────────────────────────────────────────
+
+describe("createTestType", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.testType.create).mockReset();
+  });
+
+  it("creates a test type with valid input", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.create).mockResolvedValue({
+      id: "t1",
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+      description: null,
+      active: true,
+    } as any);
+
+    const result = await createTestType({
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(vi.mocked(prisma.testType.create)).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await createTestType({
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-admin", async () => {
+    mockAuth.mockResolvedValue(labSession());
+    const result = await createTestType({
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects empty name", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    const result = await createTestType({
+      name: "",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects negative price", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    const result = await createTestType({
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: -50,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error on duplicate name/code", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.create).mockRejectedValue(
+      new Error("Unique constraint failed"),
+    );
+
+    const result = await createTestType({
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/already exists/i);
+  });
+});
+
+// ─── updateTestType ───────────────────────────────────────────────────────────
+
+describe("updateTestType", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.testType.findUnique).mockReset();
+    vi.mocked(prisma.testType.update).mockReset();
+  });
+
+  it("updates a test type with valid input", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.findUnique).mockResolvedValue({
+      id: "t1",
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+      active: true,
+    } as any);
+    vi.mocked(prisma.testType.update).mockResolvedValue({
+      id: "t1",
+      name: "CBC Updated",
+      code: "CBC",
+      category: "Hematology",
+      price: 350,
+      active: true,
+    } as any);
+
+    const result = await updateTestType("t1", {
+      name: "CBC Updated",
+      code: "CBC",
+      category: "Hematology",
+      price: 350,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.testType.name).toBe("CBC Updated");
+  });
+
+  it("returns error when test type not found", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.findUnique).mockResolvedValue(null);
+
+    const result = await updateTestType("nonexistent", {
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-admin", async () => {
+    mockAuth.mockResolvedValue(labSession());
+    const result = await updateTestType("t1", {
+      name: "CBC",
+      code: "CBC",
+      category: "Hematology",
+      price: 300,
+    });
+    expect(result.ok).toBe(false);
+  });
+});
+
+// ─── deactivateTestType ───────────────────────────────────────────────────────
+
+describe("deactivateTestType", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.testType.findUnique).mockReset();
+    vi.mocked(prisma.testType.update).mockReset();
+  });
+
+  it("deactivates an active test type", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.findUnique).mockResolvedValue({
+      id: "t1",
+      name: "CBC",
+      active: true,
+    } as any);
+    vi.mocked(prisma.testType.update).mockResolvedValue({
+      id: "t1",
+      active: false,
+    } as any);
+
+    const result = await deactivateTestType("t1");
+
+    expect(result.ok).toBe(true);
+    expect(vi.mocked(prisma.testType.update)).toHaveBeenCalledWith({
+      where: { id: "t1" },
+      data: { active: false },
+    });
+  });
+
+  it("returns error when test type not found", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.testType.findUnique).mockResolvedValue(null);
+
+    const result = await deactivateTestType("nonexistent");
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-admin", async () => {
+    mockAuth.mockResolvedValue(labSession());
+    const result = await deactivateTestType("t1");
+    expect(result.ok).toBe(false);
   });
 });

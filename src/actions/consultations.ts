@@ -584,3 +584,55 @@ export async function getPrescription(prescriptionId: string) {
 
   return { ok: true as const, prescription };
 }
+
+/**
+ * Get all prescriptions for the logged-in patient.
+ * Patient only. Returns prescriptions with items, doctor name, and appointment date.
+ */
+export async function getMyPrescriptions() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "PATIENT") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const patientId = session.user.patientId;
+  if (!patientId) {
+    return {
+      ok: false as const,
+      error: "No patient profile linked to your account",
+    };
+  }
+
+  const prescriptions = await prisma.prescription.findMany({
+    where: { consultation: { patientId } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: { include: { medicine: { select: { name: true } } } },
+      consultation: {
+        include: {
+          doctor: { include: { user: { select: { name: true } } } },
+          appointment: { select: { date: true } },
+        },
+      },
+    },
+  });
+
+  return {
+    ok: true as const,
+    prescriptions: prescriptions.map((p) => ({
+      id: p.id,
+      createdAt: p.createdAt,
+      appointmentDate: p.consultation.appointment.date,
+      doctorName: p.consultation.doctor.user.name ?? "—",
+      items: p.items.map((i) => ({
+        id: i.id,
+        dosage: i.dosage,
+        frequency: i.frequency,
+        duration: i.duration,
+        instructions: i.instructions,
+        quantity: i.quantity,
+        medicineName: i.medicine.name,
+      })),
+    })),
+  };
+}

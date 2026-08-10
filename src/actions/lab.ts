@@ -327,3 +327,156 @@ export async function getCompletedTests() {
 
   return { ok: true as const, orders };
 }
+
+// ─── Test Type Master Data CRUD ───────────────────────────────────────────────
+
+const testTypeSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  code: z.string().min(1, "Code is required"),
+  category: z.string().min(1, "Category is required"),
+  price: z.number().min(0, "Price must be ≥ 0"),
+  description: z.string().optional(),
+});
+
+export type TestTypeInput = z.infer<typeof testTypeSchema>;
+
+/**
+ * Get all test types (including inactive).
+ * Admin only.
+ */
+export async function getTestTypes() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const testTypes = await prisma.testType.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  return { ok: true as const, testTypes };
+}
+
+/**
+ * Get a single test type by ID.
+ * Admin only.
+ */
+export async function getTestType(id: string) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const testType = await prisma.testType.findUnique({ where: { id } });
+
+  if (!testType) {
+    return { ok: false as const, error: "Test type not found" };
+  }
+
+  return { ok: true as const, testType };
+}
+
+/**
+ * Create a new test type.
+ * Admin only.
+ */
+export async function createTestType(input: TestTypeInput) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const parsed = testTypeSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  try {
+    const testType = await prisma.testType.create({
+      data: {
+        name: parsed.data.name,
+        code: parsed.data.code,
+        category: parsed.data.category,
+        price: parsed.data.price,
+        description: parsed.data.description || null,
+      },
+    });
+
+    return { ok: true as const, testType };
+  } catch {
+    return {
+      ok: false as const,
+      error: "A test type with this name or code already exists",
+    };
+  }
+}
+
+/**
+ * Update an existing test type.
+ * Admin only.
+ */
+export async function updateTestType(id: string, input: TestTypeInput) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const parsed = testTypeSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  const existing = await prisma.testType.findUnique({ where: { id } });
+  if (!existing) {
+    return { ok: false as const, error: "Test type not found" };
+  }
+
+  try {
+    const testType = await prisma.testType.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        code: parsed.data.code,
+        category: parsed.data.category,
+        price: parsed.data.price,
+        description: parsed.data.description || null,
+      },
+    });
+
+    return { ok: true as const, testType };
+  } catch {
+    return {
+      ok: false as const,
+      error: "A test type with this name or code already exists",
+    };
+  }
+}
+
+/**
+ * Deactivate a test type (soft delete).
+ * Admin only.
+ */
+export async function deactivateTestType(id: string) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const existing = await prisma.testType.findUnique({ where: { id } });
+  if (!existing) {
+    return { ok: false as const, error: "Test type not found" };
+  }
+
+  await prisma.testType.update({
+    where: { id },
+    data: { active: false },
+  });
+
+  return { ok: true as const };
+}
