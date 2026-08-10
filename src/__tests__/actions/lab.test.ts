@@ -37,6 +37,7 @@ import {
   updateTestType,
   deactivateTestType,
   getTestTypes,
+  getMyLabResults,
 } from "@/actions/lab";
 
 const mockAuth = vi.mocked(auth) as unknown as {
@@ -657,5 +658,79 @@ describe("deactivateTestType", () => {
     mockAuth.mockResolvedValue(labSession());
     const result = await deactivateTestType("t1");
     expect(result.ok).toBe(false);
+  });
+});
+
+// ─── getMyLabResults ──────────────────────────────────────────────────────────
+
+describe("getMyLabResults", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.labTestOrder.findMany).mockReset();
+  });
+
+  it("returns lab orders for the logged-in patient", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([
+      {
+        id: "lt1",
+        status: "COMPLETED",
+        priority: "ROUTINE",
+        isInternal: true,
+        createdAt: new Date(),
+        testType: { name: "CBC", code: "CBC" },
+        result: {
+          results: [
+            {
+              parameter: "Hemoglobin",
+              value: "14.5",
+              unit: "g/dL",
+              referenceRange: "13-17",
+            },
+          ],
+          notes: null,
+        },
+        consultation: { doctor: { user: { name: "Dr. Rajesh" } } },
+      },
+    ] as any);
+
+    const result = await getMyLabResults();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.labOrders).toHaveLength(1);
+      expect(result.labOrders[0].testName).toBe("CBC");
+      expect(result.labOrders[0].doctorName).toBe("Dr. Rajesh");
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await getMyLabResults();
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-patient roles", async () => {
+    mockAuth.mockResolvedValue(labSession());
+    const result = await getMyLabResults();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when patient has no patientId", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "u1", role: "PATIENT" as const, name: "Test" },
+      expires: new Date().toISOString(),
+    } as any);
+
+    const result = await getMyLabResults();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns empty array when patient has no lab orders", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([] as any);
+
+    const result = await getMyLabResults();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.labOrders).toHaveLength(0);
   });
 });

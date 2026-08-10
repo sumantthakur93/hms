@@ -480,3 +480,55 @@ export async function deactivateTestType(id: string) {
 
   return { ok: true as const };
 }
+
+/**
+ * Get all lab test orders for the logged-in patient, with results.
+ * Patient only. Returns both internal and external orders.
+ */
+export async function getMyLabResults() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "PATIENT") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const patientId = session.user.patientId;
+  if (!patientId) {
+    return {
+      ok: false as const,
+      error: "No patient profile linked to your account",
+    };
+  }
+
+  const labOrders = await prisma.labTestOrder.findMany({
+    where: { patientId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      testType: { select: { name: true, code: true } },
+      result: true,
+      consultation: {
+        include: { doctor: { include: { user: { select: { name: true } } } } },
+      },
+    },
+  });
+
+  return {
+    ok: true as const,
+    labOrders: labOrders.map((l) => ({
+      id: l.id,
+      status: l.status,
+      priority: l.priority,
+      isInternal: l.isInternal,
+      createdAt: l.createdAt,
+      testName: l.testType.name,
+      testCode: l.testType.code,
+      doctorName: l.consultation?.doctor.user.name ?? "—",
+      result: l.result
+        ? {
+            results: l.result.results as Record<string, string>[],
+            notes: l.result.notes,
+            fileUrl: l.result.fileUrl,
+          }
+        : null,
+    })),
+  };
+}

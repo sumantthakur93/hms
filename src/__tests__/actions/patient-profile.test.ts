@@ -17,7 +17,10 @@ vi.mock("@/auth", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { getPatientProfile } from "@/actions/patient-profile";
+import {
+  getPatientProfile,
+  getMyMedicalHistory,
+} from "@/actions/patient-profile";
 
 const mockAuth = vi.mocked(auth) as unknown as {
   mockReset(): void;
@@ -25,15 +28,24 @@ const mockAuth = vi.mocked(auth) as unknown as {
 };
 
 function adminSession() {
-  return { user: { id: "u1", role: "ADMIN" as const }, expires: new Date().toISOString() } as any;
+  return {
+    user: { id: "u1", role: "ADMIN" as const },
+    expires: new Date().toISOString(),
+  } as any;
 }
 
 function doctorSession() {
-  return { user: { id: "u2", role: "DOCTOR" as const, profileId: "d1" }, expires: new Date().toISOString() } as any;
+  return {
+    user: { id: "u2", role: "DOCTOR" as const, profileId: "d1" },
+    expires: new Date().toISOString(),
+  } as any;
 }
 
 function patientSession() {
-  return { user: { id: "u3", role: "PATIENT" as const, patientId: "p1" }, expires: new Date().toISOString() } as any;
+  return {
+    user: { id: "u3", role: "PATIENT" as const, patientId: "p1" },
+    expires: new Date().toISOString(),
+  } as any;
 }
 
 beforeEach(() => {
@@ -45,11 +57,24 @@ describe("getPatientProfile", () => {
   it("returns full profile for admin", async () => {
     mockAuth.mockResolvedValue(adminSession());
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({
-      id: "p1", mrn: "MRN-00001", firstName: "John", lastName: "Doe",
-      phone: "123", email: null, dateOfBirth: null, gender: null,
-      bloodGroup: null, address: null, allergies: null,
-      emergencyName: null, emergencyPhone: null, emergencyRelation: null,
-      medicalHistory: null, userId: null, createdAt: new Date(), updatedAt: new Date(),
+      id: "p1",
+      mrn: "MRN-00001",
+      firstName: "John",
+      lastName: "Doe",
+      phone: "123",
+      email: null,
+      dateOfBirth: null,
+      gender: null,
+      bloodGroup: null,
+      address: null,
+      allergies: null,
+      emergencyName: null,
+      emergencyPhone: null,
+      emergencyRelation: null,
+      medicalHistory: null,
+      userId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     } as any);
     vi.mocked(prisma.consultation.findMany).mockResolvedValue([] as any);
     vi.mocked(prisma.prescription.findMany).mockResolvedValue([] as any);
@@ -87,11 +112,24 @@ describe("getPatientProfile", () => {
   it("allows doctor role", async () => {
     mockAuth.mockResolvedValue(doctorSession());
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({
-      id: "p1", mrn: "MRN-001", firstName: "Jane", lastName: "Smith",
-      phone: "456", email: null, dateOfBirth: null, gender: null,
-      bloodGroup: null, address: null, allergies: null,
-      emergencyName: null, emergencyPhone: null, emergencyRelation: null,
-      medicalHistory: null, userId: null, createdAt: new Date(), updatedAt: new Date(),
+      id: "p1",
+      mrn: "MRN-001",
+      firstName: "Jane",
+      lastName: "Smith",
+      phone: "456",
+      email: null,
+      dateOfBirth: null,
+      gender: null,
+      bloodGroup: null,
+      address: null,
+      allergies: null,
+      emergencyName: null,
+      emergencyPhone: null,
+      emergencyRelation: null,
+      medicalHistory: null,
+      userId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     } as any);
     vi.mocked(prisma.consultation.findMany).mockResolvedValue([] as any);
     vi.mocked(prisma.prescription.findMany).mockResolvedValue([] as any);
@@ -101,5 +139,99 @@ describe("getPatientProfile", () => {
 
     const result = await getPatientProfile("p1");
     expect(result.ok).toBe(true);
+  });
+});
+
+// ─── getMyMedicalHistory ──────────────────────────────────────────────────────
+
+describe("getMyMedicalHistory", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.patient.findUnique).mockReset();
+    vi.mocked(prisma.consultation.findMany).mockReset();
+    vi.mocked(prisma.prescription.findMany).mockReset();
+    vi.mocked(prisma.labTestOrder.findMany).mockReset();
+    vi.mocked(prisma.appointment.findMany).mockReset();
+  });
+
+  it("returns own medical history for patient", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.patient.findUnique).mockResolvedValue({
+      id: "p1",
+      mrn: "MRN-00001",
+      firstName: "John",
+      lastName: "Doe",
+      phone: "123",
+      email: null,
+      dateOfBirth: new Date("1990-01-01"),
+      gender: "Male",
+      bloodGroup: "O+",
+      address: null,
+      allergies: "Penicillin",
+      emergencyName: null,
+      emergencyPhone: null,
+      emergencyRelation: null,
+      medicalHistory: "Hypertension",
+      userId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+    vi.mocked(prisma.consultation.findMany).mockResolvedValue([
+      {
+        id: "c1",
+        symptoms: "Fever",
+        diagnosis: "Flu",
+        notes: null,
+        vitals: null,
+        createdAt: new Date(),
+        appointment: { date: new Date() },
+        doctor: { user: { name: "Dr. Rajesh" } },
+      },
+    ] as any);
+    vi.mocked(prisma.prescription.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([] as any);
+
+    const result = await getMyMedicalHistory();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.patient.firstName).toBe("John");
+      expect(result.patient.allergies).toBe("Penicillin");
+      expect(result.consultations).toHaveLength(1);
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await getMyMedicalHistory();
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-patient roles", async () => {
+    mockAuth.mockResolvedValue(doctorSession());
+    const result = await getMyMedicalHistory();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when patient has no patientId", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "u1", role: "PATIENT" as const },
+      expires: new Date().toISOString(),
+    } as any);
+
+    const result = await getMyMedicalHistory();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when patient record not found", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.patient.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.consultation.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.prescription.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([] as any);
+
+    const result = await getMyMedicalHistory();
+    expect(result.ok).toBe(false);
   });
 });
