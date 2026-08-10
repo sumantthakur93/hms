@@ -636,3 +636,162 @@ export async function getMyPrescriptions() {
     })),
   };
 }
+
+/**
+ * Get all patients the logged-in doctor has consulted.
+ * Doctor only. Returns patients with their last consultation date.
+ */
+export async function getMyPatients() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "DOCTOR") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const doctorId = session.user.profileId;
+  if (!doctorId) {
+    return {
+      ok: false as const,
+      error: "No doctor profile linked to your account",
+    };
+  }
+
+  const patients = await prisma.patient.findMany({
+    where: {
+      consultations: { some: { doctorId } },
+    },
+    include: {
+      consultations: {
+        where: { doctorId },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
+    orderBy: { firstName: "asc" },
+  });
+
+  return {
+    ok: true as const,
+    patients: patients.map((p) => ({
+      id: p.id,
+      mrn: p.mrn,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      phone: p.phone,
+      email: p.email,
+      dateOfBirth: p.dateOfBirth,
+      gender: p.gender,
+      lastConsultationDate: p.consultations[0]?.createdAt ?? null,
+    })),
+  };
+}
+
+/**
+ * Get all prescriptions written by the logged-in doctor.
+ * Doctor only. Returns prescriptions with patient name, MRN, and item count.
+ */
+export async function getDoctorPrescriptions() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "DOCTOR") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const doctorId = session.user.profileId;
+  if (!doctorId) {
+    return {
+      ok: false as const,
+      error: "No doctor profile linked to your account",
+    };
+  }
+
+  const prescriptions = await prisma.prescription.findMany({
+    where: { consultation: { doctorId } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: { include: { medicine: { select: { name: true } } } },
+      consultation: {
+        include: {
+          patient: {
+            select: { id: true, mrn: true, firstName: true, lastName: true },
+          },
+          appointment: { select: { date: true } },
+        },
+      },
+    },
+  });
+
+  return {
+    ok: true as const,
+    prescriptions: prescriptions.map((p) => ({
+      id: p.id,
+      createdAt: p.createdAt,
+      appointmentDate: p.consultation.appointment.date,
+      patientId: p.consultation.patient.id,
+      patientName: `${p.consultation.patient.firstName} ${p.consultation.patient.lastName}`,
+      patientMrn: p.consultation.patient.mrn,
+      itemCount: p.items.length,
+      items: p.items.map((i) => ({
+        id: i.id,
+        dosage: i.dosage,
+        frequency: i.frequency,
+        duration: i.duration,
+        instructions: i.instructions,
+        quantity: i.quantity,
+        medicineName: i.medicine.name,
+      })),
+    })),
+  };
+}
+
+/**
+ * Get all lab orders placed by the logged-in doctor.
+ * Doctor only. Returns lab orders with patient name, test type, status, and results.
+ */
+export async function getDoctorLabOrders() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "DOCTOR") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const doctorId = session.user.profileId;
+  if (!doctorId) {
+    return {
+      ok: false as const,
+      error: "No doctor profile linked to your account",
+    };
+  }
+
+  const labOrders = await prisma.labTestOrder.findMany({
+    where: { consultation: { doctorId } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      testType: { select: { name: true, code: true } },
+      patient: {
+        select: { id: true, mrn: true, firstName: true, lastName: true },
+      },
+      result: true,
+    },
+  });
+
+  return {
+    ok: true as const,
+    labOrders: labOrders.map((l) => ({
+      id: l.id,
+      status: l.status,
+      priority: l.priority,
+      isInternal: l.isInternal,
+      createdAt: l.createdAt,
+      testName: l.testType.name,
+      testCode: l.testType.code,
+      patientId: l.patient.id,
+      patientName: `${l.patient.firstName} ${l.patient.lastName}`,
+      patientMrn: l.patient.mrn,
+      result: l.result
+        ? {
+            results: l.result.results as Record<string, string>[],
+            notes: l.result.notes,
+          }
+        : null,
+    })),
+  };
+}

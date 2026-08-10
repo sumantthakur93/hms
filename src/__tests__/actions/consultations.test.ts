@@ -31,6 +31,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     patient: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -55,6 +56,9 @@ import {
   getActiveTestTypes,
   getPrescription,
   getMyPrescriptions,
+  getMyPatients,
+  getDoctorPrescriptions,
+  getDoctorLabOrders,
 } from "@/actions/consultations";
 import { isWithinEditWindow, hoursRemaining } from "@/lib/consultation-helpers";
 
@@ -811,5 +815,218 @@ describe("getMyPrescriptions", () => {
     const result = await getMyPrescriptions();
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.prescriptions).toHaveLength(0);
+  });
+});
+
+// ─── getMyPatients ────────────────────────────────────────────────────────────
+
+describe("getMyPatients", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.patient.findMany).mockReset();
+  });
+
+  it("returns patients the doctor has consulted", async () => {
+    mockAuth.mockResolvedValue(doctorSession("doc1"));
+    vi.mocked(prisma.patient.findMany).mockResolvedValue([
+      {
+        id: "p1",
+        mrn: "MRN-00001",
+        firstName: "John",
+        lastName: "Doe",
+        phone: "1234567890",
+        email: null,
+        dateOfBirth: null,
+        gender: "Male",
+        consultations: [{ createdAt: new Date("2024-06-01") }],
+      },
+    ] as any);
+
+    const result = await getMyPatients();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.patients).toHaveLength(1);
+      expect(result.patients[0].firstName).toBe("John");
+      expect(result.patients[0].lastConsultationDate).toBeDefined();
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await getMyPatients();
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-doctor roles", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    const result = await getMyPatients();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when doctor has no profileId", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "u1", role: "DOCTOR" as const },
+      expires: new Date().toISOString(),
+    } as any);
+
+    const result = await getMyPatients();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns empty array when doctor has no patients", async () => {
+    mockAuth.mockResolvedValue(doctorSession("doc1"));
+    vi.mocked(prisma.patient.findMany).mockResolvedValue([] as any);
+
+    const result = await getMyPatients();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.patients).toHaveLength(0);
+  });
+});
+
+// ─── getDoctorPrescriptions ───────────────────────────────────────────────────
+
+describe("getDoctorPrescriptions", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.prescription.findMany).mockReset();
+  });
+
+  it("returns prescriptions written by the doctor", async () => {
+    mockAuth.mockResolvedValue(doctorSession("doc1"));
+    vi.mocked(prisma.prescription.findMany).mockResolvedValue([
+      {
+        id: "rx1",
+        createdAt: new Date(),
+        items: [
+          {
+            id: "i1",
+            dosage: "1 tab",
+            frequency: "OD",
+            duration: "5 days",
+            instructions: null,
+            quantity: 5,
+            medicine: { name: "Paracetamol" },
+          },
+        ],
+        consultation: {
+          patient: {
+            id: "p1",
+            mrn: "MRN-00001",
+            firstName: "John",
+            lastName: "Doe",
+          },
+          appointment: { date: new Date() },
+        },
+      },
+    ] as any);
+
+    const result = await getDoctorPrescriptions();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prescriptions).toHaveLength(1);
+      expect(result.prescriptions[0].patientName).toBe("John Doe");
+      expect(result.prescriptions[0].itemCount).toBe(1);
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await getDoctorPrescriptions();
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-doctor roles", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    const result = await getDoctorPrescriptions();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when doctor has no profileId", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "u1", role: "DOCTOR" as const },
+      expires: new Date().toISOString(),
+    } as any);
+
+    const result = await getDoctorPrescriptions();
+    expect(result.ok).toBe(false);
+  });
+});
+
+// ─── getDoctorLabOrders ───────────────────────────────────────────────────────
+
+describe("getDoctorLabOrders", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.labTestOrder.findMany).mockReset();
+  });
+
+  it("returns lab orders placed by the doctor", async () => {
+    mockAuth.mockResolvedValue(doctorSession("doc1"));
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([
+      {
+        id: "lt1",
+        status: "COMPLETED",
+        priority: "ROUTINE",
+        isInternal: true,
+        createdAt: new Date(),
+        testType: { name: "CBC", code: "CBC" },
+        patient: {
+          id: "p1",
+          mrn: "MRN-00001",
+          firstName: "John",
+          lastName: "Doe",
+        },
+        result: {
+          results: [
+            {
+              parameter: "Hemoglobin",
+              value: "14.5",
+              unit: "g/dL",
+              referenceRange: "13-17",
+            },
+          ],
+          notes: null,
+        },
+      },
+    ] as any);
+
+    const result = await getDoctorLabOrders();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.labOrders).toHaveLength(1);
+      expect(result.labOrders[0].testName).toBe("CBC");
+      expect(result.labOrders[0].patientName).toBe("John Doe");
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const result = await getDoctorLabOrders();
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects non-doctor roles", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    const result = await getDoctorLabOrders();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when doctor has no profileId", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "u1", role: "DOCTOR" as const },
+      expires: new Date().toISOString(),
+    } as any);
+
+    const result = await getDoctorLabOrders();
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns empty array when doctor has no lab orders", async () => {
+    mockAuth.mockResolvedValue(doctorSession("doc1"));
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([] as any);
+
+    const result = await getDoctorLabOrders();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.labOrders).toHaveLength(0);
   });
 });
