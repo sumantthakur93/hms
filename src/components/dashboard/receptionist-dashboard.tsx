@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
   CalendarClock,
@@ -7,36 +6,16 @@ import {
   Clock,
   CheckCircle2,
 } from "@/components/ui/icon";
+import {
+  appointmentStatusBadge,
+  invoiceStatusBadge,
+} from "@/components/ui/status-badges";
 import { getReceptionistDashboardData } from "@/actions/dashboards";
 
 type Data = Extract<
   Awaited<ReturnType<typeof getReceptionistDashboardData>>,
   { ok: true }
 >;
-
-function apptStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "COMPLETED"
-      ? "default"
-      : status === "CHECKED_IN"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
-}
-
-function invStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "PAID"
-      ? "default"
-      : status === "ISSUED"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status}</Badge>;
-}
 
 function formatTime(t: string): string {
   const [h, m] = t.split(":").map(Number);
@@ -145,7 +124,7 @@ export function ReceptionistDashboardStats({ data }: { data: Data }) {
                       <td className="py-3 pr-2 text-muted-foreground">
                         {a.doctorName}
                       </td>
-                      <td className="py-3 pr-2">{apptStatusBadge(a.status)}</td>
+                      <td className="py-3 pr-2">{appointmentStatusBadge(a.status)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -182,7 +161,7 @@ export function ReceptionistDashboardStats({ data }: { data: Data }) {
                       <span className="font-medium text-foreground">
                         ₹{inv.totalAmount.toFixed(0)}
                       </span>
-                      {invStatusBadge(inv.status)}
+                      {invoiceStatusBadge(inv.status)}
                     </div>
                   </div>
                 </Link>

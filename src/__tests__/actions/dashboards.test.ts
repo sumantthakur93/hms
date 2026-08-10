@@ -120,6 +120,10 @@ describe("getAdminDashboardData", () => {
         { totalAmount: 500 },
         { totalAmount: 300 },
       ] as any)
+      .mockResolvedValueOnce([
+        { totalAmount: 500, paidAt: new Date() },
+        { totalAmount: 300, paidAt: new Date() },
+      ] as any)
       .mockResolvedValueOnce([] as any);
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([] as any);
     vi.mocked(prisma.medicine.findMany).mockResolvedValue([] as any);
@@ -134,6 +138,7 @@ describe("getAdminDashboardData", () => {
       expect(result.stats.activeDoctors).toBe(8);
       expect(result.stats.pendingInvoices).toBe(3);
       expect(result.stats.todayRevenue).toBe(800);
+      expect(result.monthlyRevenue).toHaveLength(6);
     }
   });
 

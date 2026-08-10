@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -10,6 +9,10 @@ import {
   IndianRupee,
   AlertTriangle,
 } from "@/components/ui/icon";
+import {
+  appointmentStatusBadge,
+  invoiceStatusBadge,
+} from "@/components/ui/status-badges";
 
 type Data = Awaited<ReturnType<typeof getAdminDashboardData>>;
 type RecentAppointment = Extract<
@@ -21,30 +24,6 @@ type Department = Extract<Data, { ok: true }>["departments"][number];
 type RecentInvoice = Extract<Data, { ok: true }>["recentInvoices"][number];
 
 import { getAdminDashboardData } from "@/actions/dashboards";
-
-function statusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "PAID"
-      ? "default"
-      : status === "ISSUED"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status}</Badge>;
-}
-
-function apptStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "COMPLETED"
-      ? "default"
-      : status === "CHECKED_IN"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
-}
 
 function formatDate(d: Date): string {
   return new Date(d).toLocaleDateString("en-IN", {
@@ -76,6 +55,46 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function RevenueSparkline({
+  data,
+}: {
+  data: Array<{ month: string; amount: number }>;
+}) {
+  const max = Math.max(...data.map((d) => d.amount), 1);
+  const points = data
+    .map((d, i) => {
+      const x = (i / (data.length - 1)) * 100;
+      const y = 100 - (d.amount / max) * 100;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="flex items-end gap-2">
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="h-12 flex-1"
+      >
+        <polyline
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-primary"
+          points={points}
+        />
+      </svg>
+      <div className="flex gap-1 text-xs text-muted-foreground">
+        {data.map((d) => (
+          <span key={d.month}>{d.month}</span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -123,22 +142,33 @@ export function AdminDashboard({
         />
       </div>
 
-      {/* Revenue */}
-      <Card>
-        <CardContent className="flex items-center gap-3 p-4">
-          <div className="flex size-12 items-center justify-center rounded-lg bg-emerald-500/10">
-            <IndianRupee className="size-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-foreground">
-              ₹{data.stats.todayRevenue.toFixed(2)}
+      {/* Revenue + Monthly Trend */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-emerald-500/10">
+              <IndianRupee className="size-6 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground">
+                ₹{data.stats.todayRevenue.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Today&apos;s Revenue
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Monthly Revenue Trend
             </p>
-            <p className="text-sm text-muted-foreground">
-              Today&apos;s Revenue
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <RevenueSparkline data={data.monthlyRevenue} />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Appointments */}
@@ -166,7 +196,7 @@ export function AdminDashboard({
                         {a.doctorName} · {a.department}
                       </p>
                     </div>
-                    {apptStatusBadge(a.status)}
+                    {appointmentStatusBadge(a.status)}
                   </div>
                 ))}
               </div>
@@ -279,7 +309,7 @@ export function AdminDashboard({
                       <span className="text-sm font-medium text-foreground">
                         ₹{inv.totalAmount.toFixed(0)}
                       </span>
-                      {statusBadge(inv.status)}
+                      {invoiceStatusBadge(inv.status)}
                     </div>
                   </div>
                 ))}

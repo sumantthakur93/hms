@@ -4,9 +4,13 @@ import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Receipt, Plus } from "@/components/ui/icon";
-import { getInvoices, getBillableAppointments, generateInvoice } from "@/actions/billing";
+import { invoiceStatusBadge } from "@/components/ui/status-badges";
+import {
+  getInvoices,
+  getBillableAppointments,
+  generateInvoice,
+} from "@/actions/billing";
 
 type Invoice = {
   id: string;
@@ -26,12 +30,6 @@ type Appointment = {
     user: { name: string | null };
   };
 };
-
-function statusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "PAID" ? "default" : status === "ISSUED" ? "secondary" : status === "CANCELLED" ? "destructive" : "outline";
-  return <Badge variant={variant}>{status}</Badge>;
-}
 
 function formatDate(d: Date): string {
   return new Date(d).toLocaleDateString("en-IN", {
@@ -140,12 +138,16 @@ export function InvoiceList() {
       {tab === "invoices" && (
         <>
           {loading && invoices.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Loading…
+            </p>
           ) : invoices.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Receipt className="size-8 text-muted-foreground" />
-                <p className="mt-3 text-sm text-muted-foreground">No invoices found</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No invoices found
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -154,20 +156,26 @@ export function InvoiceList() {
                 <Card key={inv.id}>
                   <CardContent className="flex items-center justify-between p-4">
                     <div>
-                      <p className="font-medium text-foreground">{inv.invoiceNumber}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {inv.patient.firstName} {inv.patient.lastName} · MRN: {inv.patient.mrn}
+                      <p className="font-medium text-foreground">
+                        {inv.invoiceNumber}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(inv.createdAt)} · ₹{inv.totalAmount.toFixed(2)}
+                        {inv.patient.firstName} {inv.patient.lastName} · MRN:{" "}
+                        {inv.patient.mrn}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(inv.createdAt)} · ₹
+                        {inv.totalAmount.toFixed(2)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      {statusBadge(inv.status)}
+                      {invoiceStatusBadge(inv.status)}
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => router.push(`/receptionist/billing/${inv.id}`)}
+                        onClick={() =>
+                          router.push(`/receptionist/billing/${inv.id}`)
+                        }
                       >
                         View
                       </Button>
@@ -184,13 +192,16 @@ export function InvoiceList() {
       {tab === "billable" && (
         <>
           {loading && billable.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Loading…
+            </p>
           ) : billable.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Plus className="size-8 text-muted-foreground" />
                 <p className="mt-3 text-sm text-muted-foreground">
-                  No billable appointments — all completed appointments have invoices
+                  No billable appointments — all completed appointments have
+                  invoices
                 </p>
               </CardContent>
             </Card>
@@ -207,7 +218,8 @@ export function InvoiceList() {
                         MRN: {appt.patient.mrn} · {appt.doctor.department.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(appt.date)} · Dr. {appt.doctor.user.name ?? "—"}
+                        {formatDate(appt.date)} · Dr.{" "}
+                        {appt.doctor.user.name ?? "—"}
                       </p>
                     </div>
                     <Button

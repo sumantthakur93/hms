@@ -4,6 +4,15 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     doctorProfile: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    user: {
+      findMany: vi.fn(),
+    },
+    department: {
+      findUnique: vi.fn(),
     },
     scheduleBlock: {
       create: vi.fn(),
@@ -30,6 +39,9 @@ import {
   deleteScheduleBlock,
   addBlockedDate,
   removeBlockedDate,
+  createDoctor,
+  updateDoctor,
+  getDoctor,
 } from "@/actions/schedule";
 
 const mockAuth = vi.mocked(auth) as unknown as {
@@ -39,14 +51,24 @@ const mockAuth = vi.mocked(auth) as unknown as {
 
 function adminSession() {
   return {
-    user: { id: "admin-id", role: "ADMIN", name: "Admin", email: "admin@carepoint.in" },
+    user: {
+      id: "admin-id",
+      role: "ADMIN",
+      name: "Admin",
+      email: "admin@carepoint.in",
+    },
     expires: new Date().toISOString(),
   } as any;
 }
 
 function receptionistSession() {
   return {
-    user: { id: "rec-id", role: "RECEPTIONIST", name: "Rec", email: "rec@carepoint.in" },
+    user: {
+      id: "rec-id",
+      role: "RECEPTIONIST",
+      name: "Rec",
+      email: "rec@carepoint.in",
+    },
     expires: new Date().toISOString(),
   } as any;
 }
@@ -76,7 +98,9 @@ describe("Authorization (all actions)", () => {
 
   it("rejects non-admin for createScheduleBlock", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
-    await expect(createScheduleBlock(validInput as any)).rejects.toThrow("Unauthorized");
+    await expect(createScheduleBlock(validInput as any)).rejects.toThrow(
+      "Unauthorized",
+    );
   });
 
   it("rejects non-admin for deleteScheduleBlock", async () => {
@@ -86,7 +110,9 @@ describe("Authorization (all actions)", () => {
 
   it("rejects non-admin for addBlockedDate", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
-    await expect(addBlockedDate({ doctorId: "d1", date: "2024-01-01" } as any)).rejects.toThrow("Unauthorized");
+    await expect(
+      addBlockedDate({ doctorId: "d1", date: "2024-01-01" } as any),
+    ).rejects.toThrow("Unauthorized");
   });
 
   it("rejects non-admin for removeBlockedDate", async () => {
@@ -110,7 +136,13 @@ describe("getDoctors", () => {
         user: { name: "Dr. Rajesh Mehta" },
         department: { name: "Cardiology" },
         scheduleBlocks: [
-          { id: "b1", dayOfWeek: 1, startTime: "09:00", endTime: "13:00", slotDuration: 30 },
+          {
+            id: "b1",
+            dayOfWeek: 1,
+            startTime: "09:00",
+            endTime: "13:00",
+            slotDuration: 30,
+          },
         ],
         blockedDates: [],
       },
@@ -133,7 +165,8 @@ describe("createScheduleBlock", () => {
   it("creates a valid schedule block", async () => {
     mockAuth.mockResolvedValue(adminSession());
     vi.mocked(prisma.scheduleBlock.create).mockResolvedValue({
-      id: "b1", ...validInput,
+      id: "b1",
+      ...validInput,
     } as any);
 
     const result = await createScheduleBlock(validInput);
@@ -193,10 +226,15 @@ describe("updateScheduleBlock", () => {
   it("updates a schedule block", async () => {
     mockAuth.mockResolvedValue(adminSession());
     vi.mocked(prisma.scheduleBlock.update).mockResolvedValue({
-      id: "b1", ...validInput, slotDuration: 15,
+      id: "b1",
+      ...validInput,
+      slotDuration: 15,
     } as any);
 
-    const result = await updateScheduleBlock("b1", { ...validInput, slotDuration: 15 });
+    const result = await updateScheduleBlock("b1", {
+      ...validInput,
+      slotDuration: 15,
+    });
 
     expect(result.ok).toBe(true);
     const call = vi.mocked(prisma.scheduleBlock.update).mock.calls[0][0];
@@ -223,12 +261,16 @@ describe("deleteScheduleBlock", () => {
 
   it("deletes a schedule block", async () => {
     mockAuth.mockResolvedValue(adminSession());
-    vi.mocked(prisma.scheduleBlock.delete).mockResolvedValue({ id: "b1" } as any);
+    vi.mocked(prisma.scheduleBlock.delete).mockResolvedValue({
+      id: "b1",
+    } as any);
 
     const result = await deleteScheduleBlock("b1");
 
     expect(result.ok).toBe(true);
-    expect(vi.mocked(prisma.scheduleBlock.delete)).toHaveBeenCalledWith({ where: { id: "b1" } });
+    expect(vi.mocked(prisma.scheduleBlock.delete)).toHaveBeenCalledWith({
+      where: { id: "b1" },
+    });
   });
 });
 
@@ -241,7 +283,10 @@ describe("addBlockedDate", () => {
   it("adds a blocked date with reason", async () => {
     mockAuth.mockResolvedValue(adminSession());
     vi.mocked(prisma.blockedDate.create).mockResolvedValue({
-      id: "bd1", doctorId: "doc1", date: new Date("2024-01-01"), reason: "Leave",
+      id: "bd1",
+      doctorId: "doc1",
+      date: new Date("2024-01-01"),
+      reason: "Leave",
     } as any);
 
     const result = await addBlockedDate({
@@ -258,7 +303,10 @@ describe("addBlockedDate", () => {
   it("adds a blocked date without reason", async () => {
     mockAuth.mockResolvedValue(adminSession());
     vi.mocked(prisma.blockedDate.create).mockResolvedValue({
-      id: "bd2", doctorId: "doc1", date: new Date("2024-01-02"), reason: null,
+      id: "bd2",
+      doctorId: "doc1",
+      date: new Date("2024-01-02"),
+      reason: null,
     } as any);
 
     const result = await addBlockedDate({
@@ -273,7 +321,9 @@ describe("addBlockedDate", () => {
 
   it("returns error for duplicate blocked date", async () => {
     mockAuth.mockResolvedValue(adminSession());
-    vi.mocked(prisma.blockedDate.create).mockRejectedValue(new Error("Unique constraint"));
+    vi.mocked(prisma.blockedDate.create).mockRejectedValue(
+      new Error("Unique constraint"),
+    );
 
     const result = await addBlockedDate({
       doctorId: "doc1",
@@ -295,11 +345,236 @@ describe("removeBlockedDate", () => {
 
   it("removes a blocked date", async () => {
     mockAuth.mockResolvedValue(adminSession());
-    vi.mocked(prisma.blockedDate.delete).mockResolvedValue({ id: "bd1" } as any);
+    vi.mocked(prisma.blockedDate.delete).mockResolvedValue({
+      id: "bd1",
+    } as any);
 
     const result = await removeBlockedDate("bd1");
 
     expect(result.ok).toBe(true);
-    expect(vi.mocked(prisma.blockedDate.delete)).toHaveBeenCalledWith({ where: { id: "bd1" } });
+    expect(vi.mocked(prisma.blockedDate.delete)).toHaveBeenCalledWith({
+      where: { id: "bd1" },
+    });
+  });
+});
+
+// ─── Doctor CRUD ───────────────────────────────────────────────────────────────
+
+describe("createDoctor (server action)", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    vi.mocked(prisma.doctorProfile.create).mockReset();
+    vi.mocked(prisma.department.findUnique).mockReset();
+    vi.mocked(prisma.user.findMany).mockReset();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(
+      createDoctor({
+        userId: "u1",
+        specialization: "Cardiology",
+        licenseNumber: "L123",
+        departmentId: "d1",
+      }),
+    ).rejects.toThrow("Unauthorized");
+  });
+
+  it("rejects non-admin users", async () => {
+    mockAuth.mockResolvedValue(receptionistSession());
+    await expect(
+      createDoctor({
+        userId: "u1",
+        specialization: "Cardiology",
+        licenseNumber: "L123",
+        departmentId: "d1",
+      }),
+    ).rejects.toThrow("Unauthorized");
+  });
+
+  it("creates a doctor profile with valid input", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.department.findUnique).mockResolvedValue({
+      id: "d1",
+      name: "Cardiology",
+      description: null,
+      consultationFee: 500,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+    vi.mocked(prisma.doctorProfile.create).mockResolvedValue({
+      id: "doc1",
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "L123",
+      departmentId: "d1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await createDoctor({
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "L123",
+      departmentId: "d1",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.doctor.specialization).toBe("Cardiology");
+    }
+  });
+
+  it("rejects empty specialization", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    const result = await createDoctor({
+      userId: "u1",
+      specialization: "",
+      licenseNumber: "L123",
+      departmentId: "d1",
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects empty license number", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    const result = await createDoctor({
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "",
+      departmentId: "d1",
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns error when department not found", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.department.findUnique).mockResolvedValue(null);
+
+    const result = await createDoctor({
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "L123",
+      departmentId: "nonexistent",
+    });
+
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("updateDoctor (server action)", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    vi.mocked(prisma.doctorProfile.findUnique).mockReset();
+    vi.mocked(prisma.doctorProfile.update).mockReset();
+    vi.mocked(prisma.department.findUnique).mockReset();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(
+      updateDoctor("doc1", {
+        specialization: "Neurology",
+        licenseNumber: "L456",
+        departmentId: "d2",
+      }),
+    ).rejects.toThrow("Unauthorized");
+  });
+
+  it("updates a doctor profile with valid input", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.doctorProfile.findUnique).mockResolvedValue({
+      id: "doc1",
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "L123",
+      departmentId: "d1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+    vi.mocked(prisma.department.findUnique).mockResolvedValue({
+      id: "d2",
+      name: "Neurology",
+      description: null,
+      consultationFee: 700,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+    vi.mocked(prisma.doctorProfile.update).mockResolvedValue({
+      id: "doc1",
+      userId: "u1",
+      specialization: "Neurology",
+      licenseNumber: "L456",
+      departmentId: "d2",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await updateDoctor("doc1", {
+      specialization: "Neurology",
+      licenseNumber: "L456",
+      departmentId: "d2",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.doctor.specialization).toBe("Neurology");
+    }
+  });
+
+  it("returns error when doctor not found", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.doctorProfile.findUnique).mockResolvedValue(null);
+
+    const result = await updateDoctor("nonexistent", {
+      specialization: "Neurology",
+      licenseNumber: "L456",
+      departmentId: "d2",
+    });
+
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("getDoctor (server action)", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    vi.mocked(prisma.doctorProfile.findUnique).mockReset();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(getDoctor("doc1")).rejects.toThrow("Unauthorized");
+  });
+
+  it("returns a doctor with schedule and blocked dates", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.doctorProfile.findUnique).mockResolvedValue({
+      id: "doc1",
+      userId: "u1",
+      specialization: "Cardiology",
+      licenseNumber: "L123",
+      departmentId: "d1",
+      user: { name: "Dr. Rajesh" },
+      department: { id: "d1", name: "Cardiology" },
+      scheduleBlocks: [],
+      blockedDates: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await getDoctor("doc1");
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("Dr. Rajesh");
+    expect(result?.specialization).toBe("Cardiology");
+  });
+
+  it("returns null when doctor not found", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.doctorProfile.findUnique).mockResolvedValue(null);
+
+    const result = await getDoctor("nonexistent");
+    expect(result).toBeNull();
   });
 });

@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -8,24 +7,13 @@ import {
   TestTube,
   Stethoscope,
 } from "@/components/ui/icon";
+import { appointmentStatusBadge } from "@/components/ui/status-badges";
 import { getDoctorDashboardData } from "@/actions/dashboards";
 
 type Data = Extract<
   Awaited<ReturnType<typeof getDoctorDashboardData>>,
   { ok: true }
 >;
-
-function apptStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "COMPLETED"
-      ? "default"
-      : status === "CHECKED_IN"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
-}
 
 function formatTime(t: string): string {
   const [h, m] = t.split(":").map(Number);
@@ -132,12 +120,12 @@ export function DoctorDashboard({ data }: { data: Data }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {apptStatusBadge(a.status)}
+                        {appointmentStatusBadge(a.status)}
                         {a.status === "CHECKED_IN" && (
                           <Link href={`/doctor/consultation/${a.id}`}>
                             <Button
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-primary hover:bg-primary/90"
                             >
                               <Stethoscope className="size-4" />
                               Start Consultation

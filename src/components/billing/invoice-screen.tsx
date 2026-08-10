@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { invoiceStatusBadge } from "@/components/ui/status-badges";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -68,18 +68,6 @@ type Invoice = {
     };
   } | null;
 };
-
-function statusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "PAID"
-      ? "default"
-      : status === "ISSUED"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status}</Badge>;
-}
 
 function formatDate(d: Date): string {
   return new Date(d).toLocaleDateString("en-IN", {
@@ -218,7 +206,7 @@ export function InvoiceScreen({ invoiceId }: { invoiceId: string }) {
             </p>
           </div>
         </div>
-        {statusBadge(invoice.status)}
+        {invoiceStatusBadge(invoice.status)}
       </div>
 
       {error && (
@@ -337,7 +325,7 @@ export function InvoiceScreen({ invoiceId }: { invoiceId: string }) {
               <Button
                 onClick={handleIssue}
                 disabled={acting}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
               >
                 <Send className="size-4" />
                 Issue Invoice

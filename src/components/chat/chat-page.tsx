@@ -2,10 +2,17 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat } from "ai/react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles, MessageSquare } from "@/components/ui/icon";
+import {
+  Send,
+  Sparkles,
+  MessageSquare,
+  Paperclip,
+  ArrowRight,
+} from "@/components/ui/icon";
 import type { UserRole } from "@/types/next-auth";
 
 const ROLE_BADGES: Record<UserRole, string> = {
@@ -147,7 +154,26 @@ export function ChatPage({ role }: { role: UserRole; userId: string }) {
                   : "border border-border bg-muted text-foreground"
               }`}
             >
-              <div className="whitespace-pre-wrap">{m.content}</div>
+              {m.role === "assistant" ? (
+                <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2 prose-table:text-xs">
+                  <ReactMarkdown
+                    components={{
+                      a: ({ href, children }) => (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                          <ArrowRight className="size-3" />
+                          <a href={href} className="hover:underline">
+                            {children}
+                          </a>
+                        </span>
+                      ),
+                    }}
+                  >
+                    {m.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">{m.content}</div>
+              )}
             </div>
           </div>
         ))}
@@ -167,19 +193,29 @@ export function ChatPage({ role }: { role: UserRole; userId: string }) {
       {messages.length === 0 && suggestedPrompts.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {suggestedPrompts.map((p) => (
-            <button
+            <Button
               key={p}
               onClick={() => handleSuggested(p)}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted"
+              variant="outline"
+              size="sm"
+              className="rounded-full px-3 py-1.5 text-xs"
             >
               {p}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
       {/* Input */}
       <form id="chat-page-form" onSubmit={handleSubmit} className="flex gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Attach file"
+        >
+          <Paperclip className="size-4" />
+        </Button>
         <Input
           value={input}
           onChange={handleInputChange}

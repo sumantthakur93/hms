@@ -29,10 +29,9 @@ const markPaidSchema = z.object({
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 async function generateInvoiceNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `INV-${year}-`;
+  const prefix = `INV-`;
 
-  // Find the highest invoice number for this year
+  // Find the highest invoice number
   const latest = await prisma.invoice.findFirst({
     where: { invoiceNumber: { startsWith: prefix } },
     orderBy: { invoiceNumber: "desc" },
@@ -63,7 +62,10 @@ export async function generateInvoice(appointmentId: string) {
     where: { appointmentId },
   });
   if (existing) {
-    return { ok: false as const, error: "Invoice already exists for this appointment" };
+    return {
+      ok: false as const,
+      error: "Invoice already exists for this appointment",
+    };
   }
 
   // Load appointment with consultation, department, lab orders, prescription
@@ -102,11 +104,17 @@ export async function generateInvoice(appointmentId: string) {
   }
 
   if (appointment.status !== "COMPLETED") {
-    return { ok: false as const, error: "Can only invoice completed appointments" };
+    return {
+      ok: false as const,
+      error: "Can only invoice completed appointments",
+    };
   }
 
   if (!appointment.consultation) {
-    return { ok: false as const, error: "No consultation found for this appointment" };
+    return {
+      ok: false as const,
+      error: "No consultation found for this appointment",
+    };
   }
 
   const items: Array<{
@@ -320,7 +328,10 @@ export async function markPaid(input: z.infer<typeof markPaidSchema>) {
   }
 
   if (invoice.status !== "ISSUED") {
-    return { ok: false as const, error: "Only issued invoices can be marked as paid" };
+    return {
+      ok: false as const,
+      error: "Only issued invoices can be marked as paid",
+    };
   }
 
   const updated = await prisma.invoice.update({
@@ -399,7 +410,10 @@ export async function getBillableAppointments() {
  * Set isInternal flag on a lab test order.
  * Receptionist/Admin only.
  */
-export async function setLabOrderInternal(labTestOrderId: string, isInternal: boolean) {
+export async function setLabOrderInternal(
+  labTestOrderId: string,
+  isInternal: boolean,
+) {
   const session = await auth();
   requireRole(session, "RECEPTIONIST", "ADMIN");
 

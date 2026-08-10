@@ -23,6 +23,7 @@ describe("AdminDashboard", () => {
     lowStock: [],
     departments: [],
     recentInvoices: [],
+    monthlyRevenue: [],
   };
 
   it("renders title and stat cards", () => {
@@ -218,6 +219,7 @@ describe("ReceptionistDashboardStats", () => {
     stats: { todaysTotal: 0, checkedIn: 0, waiting: 0, completed: 0 },
     todaysAppointments: [],
     recentInvoices: [],
+    monthlyRevenue: [],
   };
 
   it("renders stat cards", () => {

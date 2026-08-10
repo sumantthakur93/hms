@@ -22,6 +22,11 @@ import {
   AlertCircle,
   Edit3,
 } from "@/components/ui/icon";
+import {
+  appointmentStatusBadge,
+  invoiceStatusBadge,
+  labStatusBadge as sharedLabStatusBadge,
+} from "@/components/ui/status-badges";
 import { PatientEditForm } from "@/components/receptionist/patient-edit-form";
 import type { UserRole } from "@/types/next-auth";
 
@@ -114,42 +119,6 @@ function formatTime(t: string): string {
   const ampm = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
-function apptStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "COMPLETED"
-      ? "default"
-      : status === "CHECKED_IN"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
-}
-
-function invStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "PAID"
-      ? "default"
-      : status === "ISSUED"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status}</Badge>;
-}
-
-function labStatusBadge(status: string) {
-  const variant: "default" | "secondary" | "outline" | "destructive" =
-    status === "COMPLETED"
-      ? "default"
-      : status === "PROCESSING"
-        ? "secondary"
-        : status === "CANCELLED"
-          ? "destructive"
-          : "outline";
-  return <Badge variant={variant}>{status.replace(/_/g, " ")}</Badge>;
 }
 
 // ─── Timeline entry types ──────────────────────────────────────────────────────
@@ -367,17 +336,15 @@ function TimelineTab({ data }: { data: ProfileData }) {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
         {filters.map((f) => (
-          <button
+          <Button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-              filter === f.value
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card text-muted-foreground hover:bg-muted"
-            }`}
+            variant={filter === f.value ? "default" : "outline"}
+            size="sm"
+            className="rounded-full px-3 py-1 text-xs"
           >
             {f.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -454,7 +421,7 @@ function AppointmentsTab({ data }: { data: ProfileData }) {
               <td className="py-3 pr-2 text-muted-foreground">
                 {a.department}
               </td>
-              <td className="py-3 pr-2">{apptStatusBadge(a.status)}</td>
+              <td className="py-3 pr-2">{appointmentStatusBadge(a.status)}</td>
             </tr>
           ))}
         </tbody>
@@ -492,9 +459,14 @@ function PrescriptionExpandable({
 
   return (
     <div className="rounded-lg border border-border bg-card p-3">
-      <button
+      <div
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between text-left"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setExpanded((p) => !p);
+        }}
+        className="flex w-full cursor-pointer items-center justify-between text-left"
       >
         <div>
           <p className="text-sm font-medium text-foreground">
@@ -527,7 +499,7 @@ function PrescriptionExpandable({
             <ChevronDown className="size-4 text-muted-foreground" />
           )}
         </div>
-      </button>
+      </div>
       {expanded && (
         <div className="mt-3 space-y-1 border-t border-border pt-3">
           {prescription.items.map((item) => (
@@ -588,9 +560,14 @@ function LabOrderExpandable({
 
   return (
     <div className="rounded-lg border border-border bg-card p-3">
-      <button
+      <div
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between text-left"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setExpanded((p) => !p);
+        }}
+        className="flex w-full cursor-pointer items-center justify-between text-left"
       >
         <div>
           <p className="text-sm font-medium text-foreground">
@@ -601,7 +578,7 @@ function LabOrderExpandable({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {labStatusBadge(labOrder.status)}
+          {sharedLabStatusBadge(labOrder.status)}
           {labOrder.priority === "URGENT" && (
             <Badge variant="destructive">Urgent</Badge>
           )}
@@ -611,7 +588,7 @@ function LabOrderExpandable({
             <ChevronDown className="size-4 text-muted-foreground" />
           )}
         </div>
-      </button>
+      </div>
       {expanded && (
         <div className="mt-3 border-t border-border pt-3">
           {results && results.length > 0 ? (
@@ -683,7 +660,7 @@ function InvoicesTab({ data }: { data: ProfileData }) {
               <td className="py-3 pr-2 text-foreground">
                 ₹{inv.totalAmount.toFixed(2)}
               </td>
-              <td className="py-3 pr-2">{invStatusBadge(inv.status)}</td>
+              <td className="py-3 pr-2">{invoiceStatusBadge(inv.status)}</td>
               <td className="py-3 text-right">
                 <Button
                   variant="ghost"

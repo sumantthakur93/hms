@@ -174,3 +174,140 @@ export async function removeBlockedDate(blockedDateId: string) {
 
   return { ok: true as const };
 }
+
+// ─── Doctor Profile CRUD ───────────────────────────────────────────────────────
+
+const doctorSchema = z.object({
+  userId: z.string().min(1, "User is required"),
+  specialization: z.string().min(1, "Specialization is required"),
+  licenseNumber: z.string().min(1, "License number is required"),
+  departmentId: z.string().min(1, "Department is required"),
+});
+
+export type DoctorInput = z.infer<typeof doctorSchema>;
+
+const doctorUpdateSchema = z.object({
+  specialization: z.string().min(1, "Specialization is required"),
+  licenseNumber: z.string().min(1, "License number is required"),
+  departmentId: z.string().min(1, "Department is required"),
+});
+
+export type DoctorUpdateInput = z.infer<typeof doctorUpdateSchema>;
+
+/**
+ * Create a new doctor profile linked to an existing User account.
+ * Admin only.
+ */
+export async function createDoctor(input: DoctorInput) {
+  const session = await auth();
+  requireAdmin(session);
+
+  const parsed = doctorSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  const department = await prisma.department.findUnique({
+    where: { id: parsed.data.departmentId },
+  });
+  if (!department) {
+    return { ok: false as const, error: "Department not found" };
+  }
+
+  try {
+    const doctor = await prisma.doctorProfile.create({
+      data: {
+        userId: parsed.data.userId,
+        specialization: parsed.data.specialization,
+        licenseNumber: parsed.data.licenseNumber,
+        departmentId: parsed.data.departmentId,
+      },
+    });
+
+    return { ok: true as const, doctor };
+  } catch {
+    return {
+      ok: false as const,
+      error: "This user already has a doctor profile",
+    };
+  }
+}
+
+/**
+ * Update a doctor profile (specialization, license, department).
+ * Admin only.
+ */
+export async function updateDoctor(doctorId: string, input: DoctorUpdateInput) {
+  const session = await auth();
+  requireAdmin(session);
+
+  const parsed = doctorUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  const existing = await prisma.doctorProfile.findUnique({
+    where: { id: doctorId },
+  });
+  if (!existing) {
+    return { ok: false as const, error: "Doctor not found" };
+  }
+
+  const department = await prisma.department.findUnique({
+    where: { id: parsed.data.departmentId },
+  });
+  if (!department) {
+    return { ok: false as const, error: "Department not found" };
+  }
+
+  const doctor = await prisma.doctorProfile.update({
+    where: { id: doctorId },
+    data: {
+      specialization: parsed.data.specialization,
+      licenseNumber: parsed.data.licenseNumber,
+      departmentId: parsed.data.departmentId,
+    },
+  });
+
+  return { ok: true as const, doctor };
+}
+
+/**
+ * Get a single doctor with schedule blocks and blocked dates.
+ * Admin only.
+ */
+export async function getDoctor(doctorId: string) {
+  const session = await auth();
+  requireAdmin(session);
+
+  const d = await prisma.doctorProfile.findUnique({
+    where: { id: doctorId },
+    include: {
+      user: { select: { name: true, email: true } },
+      department: { select: { id: true, name: true } },
+      scheduleBlocks: { orderBy: { dayOfWeek: "asc" } },
+      blockedDates: { orderBy: { date: "desc" }, take: 10 },
+    },
+  });
+
+  if (!d) return null;
+
+  return {
+    id: d.id,
+    userId: d.userId,
+    name: d.user.name ?? "",
+    email: d.user.email ?? "",
+    specialization: d.specialization,
+    licenseNumber: d.licenseNumber,
+    departmentId: d.departmentId,
+    department: d.department.name,
+    scheduleBlocks: d.scheduleBlocks,
+    blockedDates: d.blockedDates,
+  };
+}

@@ -23,7 +23,7 @@ vi.mock("@/lib/prisma", () => ({
     $transaction: vi.fn(async (fn: any) =>
       fn({
         invoice: {
-          create: vi.fn(async () => ({ id: "inv1", invoiceNumber: "INV-2025-00001" })),
+          create: vi.fn(async () => ({ id: "inv1", invoiceNumber: "INV-00001" })),
         },
         invoiceItem: {
           create: vi.fn(),
@@ -198,7 +198,7 @@ describe("getInvoice", () => {
     mockAuth.mockResolvedValue(receptionistSession());
     vi.mocked(prisma.invoice.findUnique).mockResolvedValue({
       id: "inv1",
-      invoiceNumber: "INV-2025-00001",
+      invoiceNumber: "INV-00001",
       patientId: "p1",
       status: "DRAFT",
       totalAmount: 800,
@@ -241,7 +241,7 @@ describe("getInvoices", () => {
   it("returns invoices for receptionist", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
     vi.mocked(prisma.invoice.findMany).mockResolvedValue([
-      { id: "inv1", invoiceNumber: "INV-2025-00001", status: "DRAFT" },
+      { id: "inv1", invoiceNumber: "INV-00001", status: "DRAFT" },
     ] as any);
 
     const result = await getInvoices();

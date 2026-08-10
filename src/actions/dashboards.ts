@@ -43,6 +43,9 @@ export async function getAdminDashboardData() {
 
   const todayStart = startOfDay();
   const todayEnd = endOfDay();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  sixMonthsAgo.setHours(1, 0, 0, 0);
 
   const [
     totalPatients,
@@ -50,6 +53,7 @@ export async function getAdminDashboardData() {
     activeDoctors,
     pendingInvoices,
     todaysPaidInvoices,
+    monthlyPaidInvoices,
     recentAppointments,
     lowStockMedicines,
     departmentBreakdown,
@@ -76,6 +80,14 @@ export async function getAdminDashboardData() {
         paidAt: { gte: todayStart, lte: todayEnd },
       },
       select: { totalAmount: true },
+    }),
+
+    prisma.invoice.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: sixMonthsAgo },
+      },
+      select: { totalAmount: true, paidAt: true },
     }),
 
     prisma.appointment.findMany({
@@ -135,6 +147,24 @@ export async function getAdminDashboardData() {
     0,
   );
 
+  // Monthly revenue trend (last 6 months)
+  const monthlyMap: Record<string, number> = {};
+  for (const inv of monthlyPaidInvoices) {
+    if (inv.paidAt) {
+      const key = `${inv.paidAt.getFullYear()}-${String(inv.paidAt.getMonth() + 1).padStart(2, "0")}`;
+      monthlyMap[key] = (monthlyMap[key] ?? 0) + inv.totalAmount;
+    }
+  }
+  const monthlyRevenue: Array<{ month: string; amount: number }> = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("en-IN", { month: "short" });
+    monthlyRevenue.push({ month: label, amount: monthlyMap[key] ?? 0 });
+  }
+
   // Department breakdown — need to fetch doctor → department mapping
   const doctorIds = departmentBreakdown.map((d) => d.doctorId);
   const doctors = await prisma.doctorProfile.findMany({
@@ -162,6 +192,7 @@ export async function getAdminDashboardData() {
       pendingInvoices,
       todayRevenue,
     },
+    monthlyRevenue,
     recentAppointments: recentAppointments.map((a) => ({
       id: a.id,
       date: a.date,

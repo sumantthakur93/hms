@@ -40,7 +40,7 @@ export function PatientDashboard({ data }: { data: Data }) {
           <p className="text-sm text-muted-foreground">Manage your health and appointments</p>
         </div>
         <Link href="/patient/book">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-primary hover:bg-primary/90">
             <Stethoscope className="size-4" />
             Book Appointment
           </Button>
