@@ -482,3 +482,118 @@ export async function getLabOrdersForClassification() {
       })),
   };
 }
+
+/**
+ * Get billing report data: summary counts, monthly revenue trend,
+ * and payment method breakdown. Admin only.
+ */
+export async function getBillingReport() {
+  const session = await auth();
+  requireRole(session, "ADMIN");
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  sixMonthsAgo.setDate(1);
+  sixMonthsAgo.setHours(0, 0, 0, 0);
+
+  const [
+    draftCount,
+    issuedCount,
+    paidCount,
+    cancelledCount,
+    todaysPaidInvoices,
+    monthlyPaidInvoices,
+    paidInvoicesForMethodBreakdown,
+  ] = await Promise.all([
+    prisma.invoice.count({ where: { status: "DRAFT" } }),
+    prisma.invoice.count({ where: { status: "ISSUED" } }),
+    prisma.invoice.count({ where: { status: "PAID" } }),
+    prisma.invoice.count({ where: { status: "CANCELLED" } }),
+
+    prisma.invoice.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: todayStart, lte: todayEnd },
+      },
+      select: { totalAmount: true },
+    }),
+
+    prisma.invoice.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: sixMonthsAgo },
+      },
+      select: { totalAmount: true, paidAt: true },
+    }),
+
+    prisma.invoice.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: monthStart },
+      },
+      select: { totalAmount: true, paymentMethod: true },
+    }),
+  ]);
+
+  const todayRevenue = todaysPaidInvoices.reduce(
+    (sum, inv) => sum + inv.totalAmount,
+    0,
+  );
+  const monthRevenue = paidInvoicesForMethodBreakdown.reduce(
+    (sum, inv) => sum + inv.totalAmount,
+    0,
+  );
+
+  // Monthly revenue trend (last 6 months)
+  const monthlyMap: Record<string, number> = {};
+  for (const inv of monthlyPaidInvoices) {
+    if (inv.paidAt) {
+      const key = `${inv.paidAt.getFullYear()}-${String(inv.paidAt.getMonth() + 1).padStart(2, "0")}`;
+      monthlyMap[key] = (monthlyMap[key] ?? 0) + inv.totalAmount;
+    }
+  }
+  const monthlyRevenue: Array<{ month: string; amount: number }> = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("en-IN", { month: "short" });
+    monthlyRevenue.push({ month: label, amount: monthlyMap[key] ?? 0 });
+  }
+
+  // Payment method breakdown (this month)
+  const methodMap: Record<string, { count: number; amount: number }> = {};
+  for (const inv of paidInvoicesForMethodBreakdown) {
+    const method = inv.paymentMethod ?? "CASH";
+    if (!methodMap[method]) methodMap[method] = { count: 0, amount: 0 };
+    methodMap[method].count++;
+    methodMap[method].amount += inv.totalAmount;
+  }
+  const paymentMethods = Object.entries(methodMap).map(([method, data]) => ({
+    method,
+    count: data.count,
+    amount: data.amount,
+  }));
+
+  return {
+    ok: true as const,
+    summary: {
+      todayRevenue,
+      monthRevenue,
+      draftCount,
+      issuedCount,
+      paidCount,
+      cancelledCount,
+    },
+    monthlyRevenue,
+    paymentMethods,
+  };
+}

@@ -482,3 +482,19 @@ model ChatMessage {
 
   @@map("chat_messages")
 }
+
+// ─── Hospital Settings ────────────────────────────────────────────────────────
+
+model HospitalSetting {
+  id      String @id @default(cuid())
+  name    String @default("CarePoint Hospital")
+  address String? @db.Text
+  phone   String?
+  email   String?
+  logoUrl String? @map("logo_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("hospital_settings")
+}

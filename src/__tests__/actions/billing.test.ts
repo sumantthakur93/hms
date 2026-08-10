@@ -12,6 +12,8 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
     },
     invoiceItem: {
       create: vi.fn(),
@@ -19,11 +21,15 @@ vi.mock("@/lib/prisma", () => ({
     labTestOrder: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      findMany: vi.fn(),
     },
     $transaction: vi.fn(async (fn: any) =>
       fn({
         invoice: {
-          create: vi.fn(async () => ({ id: "inv1", invoiceNumber: "INV-00001" })),
+          create: vi.fn(async () => ({
+            id: "inv1",
+            invoiceNumber: "INV-00001",
+          })),
         },
         invoiceItem: {
           create: vi.fn(),
@@ -48,6 +54,8 @@ import {
   cancelInvoice,
   getBillableAppointments,
   setLabOrderInternal,
+  getLabOrdersForClassification,
+  getBillingReport,
 } from "@/actions/billing";
 
 const mockAuth = vi.mocked(auth) as unknown as {
@@ -103,8 +111,16 @@ describe("generateInvoice", () => {
       ],
       prescription: {
         items: [
-          { dispensed: true, quantity: 10, medicine: { name: "Paracetamol", unitPrice: 2.5 } },
-          { dispensed: false, quantity: 5, medicine: { name: "Amoxicillin", unitPrice: 5 } },
+          {
+            dispensed: true,
+            quantity: 10,
+            medicine: { name: "Paracetamol", unitPrice: 2.5 },
+          },
+          {
+            dispensed: false,
+            quantity: 5,
+            medicine: { name: "Amoxicillin", unitPrice: 5 },
+          },
         ],
       },
     },
@@ -113,7 +129,9 @@ describe("generateInvoice", () => {
   it("generates invoice with consultation + internal labs + dispensed medicines", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(completedAppointment as any);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(
+      completedAppointment as any,
+    );
 
     const result = await generateInvoice("a1");
     expect(result.ok).toBe(true);
@@ -123,7 +141,9 @@ describe("generateInvoice", () => {
 
   it("rejects if invoice already exists for appointment", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
-    vi.mocked(prisma.invoice.findFirst).mockResolvedValue({ id: "inv1" } as any);
+    vi.mocked(prisma.invoice.findFirst).mockResolvedValue({
+      id: "inv1",
+    } as any);
 
     const result = await generateInvoice("a1");
     expect(result.ok).toBe(false);
@@ -168,7 +188,9 @@ describe("generateInvoice", () => {
   it("excludes external lab tests from invoice", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(completedAppointment as any);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(
+      completedAppointment as any,
+    );
 
     await generateInvoice("a1");
     // Check that $transaction was called — the item creation logic is inside
@@ -179,7 +201,9 @@ describe("generateInvoice", () => {
   it("excludes non-dispensed medicines from invoice", async () => {
     mockAuth.mockResolvedValue(receptionistSession());
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(completedAppointment as any);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue(
+      completedAppointment as any,
+    );
 
     await generateInvoice("a1");
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -453,5 +477,103 @@ describe("setLabOrderInternal", () => {
 
     const result = await setLabOrderInternal("nonexistent", true);
     expect(result.ok).toBe(false);
+  });
+});
+
+// ─── getLabOrdersForClassification ────────────────────────────────────────────
+
+describe("getLabOrdersForClassification", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.labTestOrder.findMany).mockReset();
+  });
+
+  it("returns unclassified lab orders for receptionist", async () => {
+    mockAuth.mockResolvedValue(receptionistSession());
+    vi.mocked(prisma.labTestOrder.findMany).mockResolvedValue([
+      {
+        id: "lt1",
+        status: "ORDERED",
+        priority: "ROUTINE",
+        createdAt: new Date(),
+        testType: { name: "CBC", code: "CBC" },
+        consultation: {
+          patient: {
+            id: "p1",
+            mrn: "MRN-001",
+            firstName: "John",
+            lastName: "Doe",
+          },
+          appointment: { id: "a1", date: new Date() },
+        },
+      },
+    ] as any);
+
+    const result = await getLabOrdersForClassification();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.labOrders).toHaveLength(1);
+      expect(result.labOrders[0].patientName).toBe("John Doe");
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(getLabOrdersForClassification()).rejects.toThrow(
+      "Unauthorized",
+    );
+  });
+
+  it("rejects patient role", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    await expect(getLabOrdersForClassification()).rejects.toThrow(
+      "Unauthorized",
+    );
+  });
+});
+
+// ─── getBillingReport ─────────────────────────────────────────────────────────
+
+describe("getBillingReport", () => {
+  function adminSession() {
+    return {
+      user: { id: "adm-id", role: "ADMIN" as const, name: "Admin" },
+      expires: new Date().toISOString(),
+    } as any;
+  }
+
+  beforeEach(() => {
+    vi.mocked(prisma.invoice.count).mockReset();
+    vi.mocked(prisma.invoice.findMany).mockReset();
+    vi.mocked(prisma.invoice.groupBy).mockReset();
+  });
+
+  it("returns billing report for admin", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    vi.mocked(prisma.invoice.count).mockResolvedValue(5);
+    vi.mocked(prisma.invoice.findMany).mockResolvedValue([
+      { totalAmount: 500, paidAt: new Date(), paymentMethod: "CASH" },
+      { totalAmount: 300, paidAt: new Date(), paymentMethod: "UPI" },
+    ] as any);
+    vi.mocked(prisma.invoice.groupBy).mockResolvedValue([
+      { _sum: { totalAmount: 800 }, _count: 2 },
+    ] as any);
+
+    const result = await getBillingReport();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.summary).toBeDefined();
+      expect(result.monthlyRevenue).toBeDefined();
+      expect(result.paymentMethods).toBeDefined();
+    }
+  });
+
+  it("rejects unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(getBillingReport()).rejects.toThrow("Unauthorized");
+  });
+
+  it("rejects receptionist role", async () => {
+    mockAuth.mockResolvedValue(receptionistSession());
+    await expect(getBillingReport()).rejects.toThrow("Unauthorized");
   });
 });
