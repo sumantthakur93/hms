@@ -1,15 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { getReceptionistDashboardData } from "@/actions/dashboards";
+import { getPatient } from "@/actions/patients";
 import { PatientSearch } from "@/components/receptionist/patient-search";
 import { PatientRegistrationForm } from "@/components/receptionist/patient-registration-form";
 import { PatientEditForm } from "@/components/receptionist/patient-edit-form";
-import { getPatient } from "@/actions/patients";
-import {
-  UserPlus,
-  Search,
-  Edit3,
-  X,
-} from "@/components/ui/icon";
+import { ReceptionistDashboardStats } from "@/components/dashboard/receptionist-dashboard";
+import { UserPlus, Search, Edit3, X } from "@/components/ui/icon";
 
 export default async function ReceptionistDashboard({
   searchParams,
@@ -24,10 +21,10 @@ export default async function ReceptionistDashboard({
   const params = await searchParams;
   const editId = params.edit;
 
-  let editPatient: Awaited<ReturnType<typeof getPatient>> | null = null;
-  if (editId) {
-    editPatient = await getPatient(editId);
-  }
+  const [dashboardData, editPatient] = await Promise.all([
+    getReceptionistDashboardData(),
+    editId ? getPatient(editId) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -36,14 +33,16 @@ export default async function ReceptionistDashboard({
           Receptionist Dashboard
         </h1>
         <p className="text-sm text-muted-foreground">
-          Register patients, search records, and manage demographics
+          Register patients, manage appointments, and track billing
         </p>
       </div>
+
+      {/* Dashboard stats */}
+      {dashboardData.ok && <ReceptionistDashboardStats data={dashboardData} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left: Search + Registration */}
         <div className="space-y-6">
-          {/* Patient Search */}
           <section className="rounded-xl border border-border bg-card/50 p-5">
             <div className="mb-4 flex items-center gap-2">
               <Search className="size-5 text-primary" />
@@ -54,7 +53,6 @@ export default async function ReceptionistDashboard({
             <PatientSearch />
           </section>
 
-          {/* Walk-in Registration */}
           <section className="rounded-xl border border-border bg-card/50 p-5">
             <div className="mb-4 flex items-center gap-2">
               <UserPlus className="size-5 text-primary" />
@@ -88,10 +86,7 @@ export default async function ReceptionistDashboard({
             </section>
           ) : (
             <section className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/30 p-5 text-center">
-              <Search
-                className="mb-3 size-8 text-muted-foreground"
-               
-              />
+              <Search className="mb-3 size-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 Search for a patient above and select them to edit their
                 demographics

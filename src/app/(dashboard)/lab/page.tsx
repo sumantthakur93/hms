@@ -1,33 +1,16 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ListTodo, CheckCircle2 } from "@/components/ui/icon";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { getLabDashboardData } from "@/actions/dashboards";
+import { LabDashboard } from "@/components/dashboard/lab-dashboard";
 
-export default function LabDashboard() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Lab Technician Dashboard
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage test queue and enter results.
-        </p>
-      </div>
+export default async function LabDashboardPage() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "LAB_TECHNICIAN") {
+    redirect("/");
+  }
 
-      <div className="flex gap-3">
-        <Link href="/lab/queue">
-          <Button>
-            <ListTodo className="size-4" />
-            Test Queue
-          </Button>
-        </Link>
-        <Link href="/lab/completed">
-          <Button variant="outline">
-            <CheckCircle2 className="size-4" />
-            Completed Tests
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
+  const data = await getLabDashboardData();
+  if (!data.ok) redirect("/lab");
+
+  return <LabDashboard data={data} />;
 }

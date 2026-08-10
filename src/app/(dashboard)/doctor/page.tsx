@@ -1,25 +1,16 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { CalendarClock } from "@/components/ui/icon";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { getDoctorDashboardData } from "@/actions/dashboards";
+import { DoctorDashboard } from "@/components/dashboard/doctor-dashboard";
 
-export default function DoctorDashboard() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Doctor Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          View your appointments and start consultations.
-        </p>
-      </div>
+export default async function DoctorDashboardPage() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "DOCTOR") {
+    redirect("/");
+  }
 
-      <div className="flex gap-3">
-        <Link href="/doctor/appointments">
-          <Button>
-            <CalendarClock className="size-4" />
-            Today&apos;s Appointments
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
+  const data = await getDoctorDashboardData();
+  if (!data.ok) redirect("/doctor");
+
+  return <DoctorDashboard data={data} />;
 }
