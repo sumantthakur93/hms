@@ -40,6 +40,14 @@ export default auth((req) => {
 
   // All other routes require authentication
   if (!session?.user) {
+    // API routes get a 401 JSON response (not a browser redirect) so API
+    // clients can handle auth failures programmatically.
+    if (pathname.startsWith("/api/")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      });
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return Response.redirect(loginUrl);

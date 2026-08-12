@@ -592,3 +592,60 @@ Walk-in patients (no login): **Lakshmi Reddy** (MRN-00004), **Mohammed Khan** (M
   - [ ] D-UI (UI/rendering abuse) — 10
   - [ ] D-MISC (miscellaneous) — 20
 - [ ] File bugs in GitHub Issues for any failure (label `needs-triage`)
+
+---
+
+## T-CHAT — AI Chatbot
+
+Coverage for the AI Health Assistant chatbot. Entry points: floating
+`<ChatPanel>` (all dashboard pages) and full-page `<ChatPage>` (per-role
+`/<role>/chat` routes). Backend: `POST /api/chat` (streamText + tools) and
+`GET /api/chat` (history). Tools: 21 total (16 read + 5 write), role-filtered.
+
+> **Prerequisites:** `pnpm dev` running, `pnpm db:seed` executed,
+> `GOOGLE_GENERATIVE_AI_API_KEY` set in `.env` with a valid Google AI Studio
+> key. Run `node scripts/test-chat.mjs` for automated e2e coverage.
+
+### T-CHAT.1 — UI / Interaction (per role)
+
+- [ ] T-CHAT.1.01 — Floating chat button renders on all dashboard pages
+- [ ] T-CHAT.1.02 — Role badge correct (Admin/Doctor/Patient/Receptionist/Lab mode)
+- [ ] T-CHAT.1.03 — Empty state renders ("Ask me anything about your health records")
+- [ ] T-CHAT.1.04 — Suggested prompts render (role-specific, 2-3 prompts)
+- [ ] T-CHAT.1.05 — Panel closes via Close (X) button
+- [ ] T-CHAT.1.06 — No console errors on open/close
+
+### T-CHAT.2 — Responsive Layout
+
+- [ ] T-CHAT.2.01 — Mobile (≤640px): full-screen panel + dark overlay
+- [ ] T-CHAT.2.02 — Desktop (≥768px): floating panel, no mobile overlay
+
+### T-CHAT.3 — Backend / API
+
+- [ ] T-CHAT.3.01 — GET /api/chat → 401 JSON when logged out (not 302 redirect)
+- [ ] T-CHAT.3.02 — POST /api/chat → 401 JSON when logged out
+- [ ] T-CHAT.3.03 — GET /api/chat?conversationId=<other user's> → 404 (scoped)
+
+### T-CHAT.4 — Read Tool Flows (model-dependent)
+
+- [ ] T-CHAT.4.01 — Doctor sees only own appointments (Rahul, not Sneha/Arjun)
+- [ ] T-CHAT.4.02 — Patient gets reply without supplying patientId (auto-injected)
+- [ ] T-CHAT.4.03 — Receptionist sees all today's appointments
+- [ ] T-CHAT.4.04 — Lab technician gets lab queue reply
+- [ ] T-CHAT.4.05 — Admin gets dashboard/appointments reply
+
+### T-CHAT.5 — Write-Tool Confirmation Gate (model-dependent)
+
+- [ ] T-CHAT.5.01 — Write tool returns `[CONFIRMATION REQUIRED]` marker (not direct execution)
+- [ ] T-CHAT.5.02 — Cancel button aborts the write action
+
+### T-CHAT.6 — Conversation Persistence
+
+- [ ] T-CHAT.6.01 — Sequential messages reuse the same conversation (no fragmentation)
+- [ ] T-CHAT.6.02 — History reloads on panel close/reopen
+
+### T-CHAT.7 — Vitest Unit Tests
+
+- [ ] T-CHAT.7.01 — `chat-tools.test.ts`: 11 registry/role tests pass
+- [ ] T-CHAT.7.02 — `chat-tools-auth.test.ts`: 18 authorization/confirmation tests pass
+- [ ] T-CHAT.7.03 — `chat-panel.test.tsx`: 12 UI tests pass (error, confirmation, empty bubble)
