@@ -153,7 +153,7 @@ const showTodaysAppointments: ToolFactory = (session) =>
         return "No appointments scheduled for today.";
       const lines = appointments.map(
         (a) =>
-          `- ${a.startTime} ${a.patient.firstName} ${a.patient.lastName} (${a.patient.mrn}) — Dr. ${a.doctor.user.name ?? "—"} [${a.status}]`,
+          `- ${a.startTime} ${a.patient.firstName} ${a.patient.lastName} (${a.patient.mrn}) — Dr. ${a.doctor.user.name ?? "—"} [${a.status}] (ID: ${a.id})`,
       );
       return `**Today's Appointments (${appointments.length})**\n\n${lines.join("\n")}`;
     },
@@ -516,7 +516,7 @@ const getPatientNextAppointment: ToolFactory = (session) =>
         },
       });
       if (!appt) return "You have no upcoming appointments.";
-      return `**Next Appointment**\n- Date: ${new Date(appt.date).toLocaleDateString()}\n- Time: ${appt.startTime}\n- Doctor: Dr. ${appt.doctor.user.name ?? "—"}\n- Department: ${appt.doctor.department.name}`;
+      return `**Next Appointment**\n- ID: ${appt.id}\n- Date: ${new Date(appt.date).toLocaleDateString()}\n- Time: ${appt.startTime}\n- Doctor: Dr. ${appt.doctor.user.name ?? "—"}\n- Department: ${appt.doctor.department.name}`;
     },
   });
 
@@ -547,7 +547,7 @@ const getPatientAppointments: ToolFactory = (session) =>
       if (appts.length === 0) return "No appointments found.";
       const lines = appts.map(
         (a) =>
-          `- ${new Date(a.date).toLocaleDateString()} ${a.startTime} — Dr. ${a.doctor.user.name ?? "—"} [${a.status}]`,
+          `- ${new Date(a.date).toLocaleDateString()} ${a.startTime} — Dr. ${a.doctor.user.name ?? "—"} [${a.status}] (ID: ${a.id})`,
       );
       return `**Appointments (${appts.length})**\n\n${lines.join("\n")}`;
     },
@@ -842,11 +842,11 @@ export const TOOLS_PER_ROLE: Record<UserRole, string[]> = {
 };
 
 export const ROLE_SYSTEM_PROMPTS: Record<UserRole, string> = {
-  ADMIN: `You are the AI Health Assistant for CarePoint Hospital, operating in Admin mode. You can view hospital-wide data including appointments, patients, medicines, invoices, and lab tests. When users ask about specific records, use the available tools to fetch real data. Format responses in Markdown with lists and tables where appropriate. You have no write tools — direct the user to the relevant UI for any changes.`,
-  DOCTOR: `You are the AI Health Assistant for CarePoint Hospital, operating in Doctor mode. You can view your appointments, patient timelines, lab results, and prescriptions for patients you have a clinical relationship with. You can order lab tests and add medicines to prescriptions. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Use tools to fetch real patient data. Format responses in Markdown.`,
-  PATIENT: `You are the AI Health Assistant for CarePoint Hospital, operating in Patient mode. You can view your own appointments, prescriptions, and lab results — your patient ID is injected automatically, so you never need to ask for it. You can book and cancel appointments. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Format responses in clear, patient-friendly Markdown.`,
-  RECEPTIONIST: `You are the AI Health Assistant for CarePoint Hospital, operating in Receptionist mode. You can search patients, view appointments, and manage billing. You can book/cancel appointments and record payments. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Use tools to fetch real data. Format responses in Markdown.`,
-  LAB_TECHNICIAN: `You are the AI Health Assistant for CarePoint Hospital, operating in Lab Technician mode. You can view the lab test queue and available test types, and show lab results for a patient. Format responses in Markdown.`,
+  ADMIN: `You are the AI Health Assistant for CarePoint Hospital, operating in Admin mode. You can view hospital-wide data including appointments, patients, medicines, invoices, and lab tests. When users ask about specific records, use the available tools to fetch real data. Format responses in Markdown with lists and tables where appropriate. You have no write tools — direct the user to the relevant UI for any changes.\n\nIMPORTANT: Tool outputs may include internal IDs (e.g. appointment IDs, patient IDs). Use these IDs internally when calling other tools, but NEVER display raw IDs to the user. Refer to records by human-readable attributes like patient name, date, time, or doctor name instead.`,
+  DOCTOR: `You are the AI Health Assistant for CarePoint Hospital, operating in Doctor mode. You can view your appointments, patient timelines, lab results, and prescriptions for patients you have a clinical relationship with. You can order lab tests and add medicines to prescriptions. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Use tools to fetch real patient data. Format responses in Markdown.\n\nIMPORTANT: Tool outputs may include internal IDs (e.g. appointment IDs, patient IDs). Use these IDs internally when calling other tools, but NEVER display raw IDs to the user. Refer to records by human-readable attributes like patient name, date, time, or doctor name instead.`,
+  PATIENT: `You are the AI Health Assistant for CarePoint Hospital, operating in Patient mode. You can view your own appointments, prescriptions, and lab results — your patient ID is injected automatically, so you never need to ask for it. You can book and cancel appointments. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Format responses in clear, patient-friendly Markdown.\n\nIMPORTANT: Tool outputs may include internal IDs (e.g. appointment IDs, patient IDs). Use these IDs internally when calling other tools, but NEVER display raw IDs to the user. Refer to records by human-readable attributes like date, time, or doctor name instead.`,
+  RECEPTIONIST: `You are the AI Health Assistant for CarePoint Hospital, operating in Receptionist mode. You can search patients, view appointments, and manage billing. You can book/cancel appointments and record payments. Write tools require confirmation: the first call returns a pending-approval summary. Only re-invoke the tool with confirm=true AFTER the user has explicitly replied with an affirmative answer (e.g. "yes", "proceed", "confirm"). If the user declines, do not execute. Use tools to fetch real data. Format responses in Markdown.\n\nIMPORTANT: Tool outputs may include internal IDs (e.g. appointment IDs, patient IDs). Use these IDs internally when calling other tools, but NEVER display raw IDs to the user. Refer to records by human-readable attributes like patient name, date, time, or doctor name instead.`,
+  LAB_TECHNICIAN: `You are the AI Health Assistant for CarePoint Hospital, operating in Lab Technician mode. You can view the lab test queue and available test types, and show lab results for a patient. Format responses in Markdown.\n\nIMPORTANT: Tool outputs may include internal IDs. Use these IDs internally when calling other tools, but NEVER display raw IDs to the user. Refer to records by human-readable attributes like patient name, test name, or date instead.`,
 };
 
 // ─── Tool builder ─────────────────────────────────────────────────────────────
