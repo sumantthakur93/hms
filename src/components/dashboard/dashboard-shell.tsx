@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/icon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -234,14 +235,17 @@ export function DashboardShell({
                     {userEmail}
                   </p>
                 </div>
-                <Link
-                  href="/api/auth/signout"
-                  className="mt-1 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                  onClick={() => setUserMenuOpen(false)}
+                <Button
+                  variant="ghost"
+                  className="mt-1 flex w-full items-center justify-start gap-2 px-3 py-2 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    signOut({ callbackUrl: "/login" });
+                  }}
                 >
                   <LogOut className="size-4" />
                   Sign Out
-                </Link>
+                </Button>
               </div>
             )}
             </div>
