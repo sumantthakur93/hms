@@ -60,7 +60,10 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
   const { messages, conversationId } = body;
 
@@ -134,10 +137,12 @@ export async function POST(req: NextRequest) {
         if (lastUserMessage) {
           const userText = getTextFromMessage(lastUserMessage);
           if (userText) {
-            await prisma.chatConversation.update({
-              where: { id: convId! },
-              data: { title: userText.slice(0, 50) },
-            }).catch(() => {});
+            await prisma.chatConversation
+              .update({
+                where: { id: convId! },
+                data: { title: userText.slice(0, 50) },
+              })
+              .catch(() => {});
           }
         }
       },
@@ -201,9 +206,43 @@ export async function GET(req: NextRequest) {
   const conversations = await prisma.chatConversation.findMany({
     where: { userId: session.user.id },
     orderBy: { updatedAt: "desc" },
-    take: 20,
+    take: 50,
     select: { id: true, title: true, updatedAt: true },
   });
 
   return NextResponse.json({ conversations });
+}
+
+// ─── DELETE: Delete a conversation (cascades to messages) ─────────────────────
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.role) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const url = new URL(req.url);
+  const conversationId = url.searchParams.get("conversationId");
+  if (!conversationId) {
+    return NextResponse.json(
+      { error: "conversationId is required" },
+      { status: 400 },
+    );
+  }
+
+  // Ownership check — only delete if it belongs to the user
+  const owned = await prisma.chatConversation.findFirst({
+    where: { id: conversationId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!owned) {
+    // Don't leak existence — 404
+    return NextResponse.json(
+      { error: "Conversation not found" },
+      { status: 404 },
+    );
+  }
+
+  await prisma.chatConversation.delete({ where: { id: conversationId } });
+  return NextResponse.json({ ok: true });
 }

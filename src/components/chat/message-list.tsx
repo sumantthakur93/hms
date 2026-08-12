@@ -30,9 +30,7 @@ const markdownComponents = {
   ),
   table: ({ children }: { children?: React.ReactNode }) => (
     <div className="my-2 overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
-        {children}
-      </table>
+      <table className="w-full border-collapse text-xs">{children}</table>
     </div>
   ),
   thead: ({ children }: { children?: React.ReactNode }) => (
@@ -108,18 +106,33 @@ export function MessageList({
           <div>
             <p className="font-medium">Something went wrong</p>
             <p className="text-xs opacity-90">
-              {error.message || "The assistant could not respond. Please try again."}
+              {error.message ||
+                "The assistant could not respond. Please try again."}
             </p>
           </div>
         </div>
       )}
 
-      {messages.map((m) => {
+      {messages.map((m, idx) => {
         const text = getMessageText(m);
         const isPending = text.includes(PENDING_CONFIRMATION_MARKER);
+        const isLastMessage = idx === messages.length - 1;
+        // During streaming, the last assistant message may have empty text
+        // before parts arrive — skip the "(action completed)" placeholder
+        // and let the "Thinking…" indicator handle the loading state.
+        if (
+          m.role === "assistant" &&
+          text.trim() === "" &&
+          isLastMessage &&
+          isLoading
+        ) {
+          return null;
+        }
         // Tool-only assistant turn with no text — show a non-blank placeholder
         const displayText =
-          m.role === "assistant" && text.trim() === "" ? "_(action completed)_" : text;
+          m.role === "assistant" && text.trim() === ""
+            ? "_(action completed)_"
+            : text;
         return (
           <div
             key={m.id}

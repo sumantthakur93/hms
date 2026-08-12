@@ -1,176 +1,214 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Sparkles, Menu } from "@/components/ui/icon";
 import {
-  Send,
-  Sparkles,
-  MessageSquare,
-  Paperclip,
-} from "@/components/ui/icon";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import type { UserRole } from "@/types/next-auth";
+import { ROLE_BADGES } from "@/lib/chat-tools";
+import { ChatThread } from "@/components/chat/chat-thread";
 import {
-  ROLE_BADGES,
-  SUGGESTED_PROMPTS,
-} from "@/lib/chat-tools";
-import { MessageList } from "@/components/chat/message-list";
+  ConversationList,
+  type ConversationSummary,
+} from "@/components/chat/conversation-list";
 
-type ChatMetadata = { conversationId?: string };
+type ChatPageProps = {
+  role: UserRole;
+  userName?: string | null;
+  /** Base chat path for this role, e.g. "/doctor/chat" (no trailing slash). */
+  basePath: string;
+  /** Active conversation id from the URL (null/undefined = new chat). */
+  initialConversationId?: string | null;
+};
 
-export function ChatPage({ role }: { role: UserRole; userId: string }) {
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+export function ChatPage({
+  role,
+  userName,
+  basePath,
+  initialConversationId,
+}: ChatPageProps) {
+  const router = useRouter();
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Local conversation id — initialized from the URL, then updated in-place
+  // when the server creates a new conversation (without triggering a remount).
+  const [conversationId, setConversationId] = useState<string | null>(
+    initialConversationId ?? null,
+  );
+  // The thread key controls remounting. It only changes on explicit select /
+  // new-chat — NOT when a conversation is created mid-thread, so the streamed
+  // messages survive.
+  const [threadKey, setThreadKey] = useState(
+    () => initialConversationId ?? "new",
+  );
 
-  const { messages, sendMessage, status, setMessages, error } =
-    useChat<UIMessage<ChatMetadata>>({
-      transport: new DefaultChatTransport({
-        api: "/api/chat",
-        body: { conversationId },
-      }),
-      onFinish: ({ message }) => {
-        const id = (message.metadata as ChatMetadata | undefined)?.conversationId;
-        if (id) setConversationId(id);
-      },
-    });
+  const activeId = conversationId;
+  // A new chat is active when there's no conversation id. Show the placeholder then.
+  const isNewChat = !activeId;
 
-  const isLoading = status === "submitted" || status === "streaming";
-
-  useEffect(() => {
-    if (!conversationId && messages.length === 0) {
-      fetch(`/api/chat`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.conversations?.length > 0) {
-            const latest = data.conversations[0];
-            setConversationId(latest.id);
-            fetch(`/api/chat?conversationId=${latest.id}`)
-              .then((r) => r.json())
-              .then((msgData) => {
-                if (msgData.messages?.length > 0) {
-                  setMessages(
-                    msgData.messages.map(
-                      (m: { id: string; role: string; content: string }) =>
-                        ({
-                          id: m.id,
-                          role: m.role as "user" | "assistant",
-                          parts: [{ type: "text" as const, text: m.content }],
-                        }) as UIMessage,
-                    ),
-                  );
-                }
-              });
-          }
-        })
-        .catch(() => {});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ─── Load conversation list ────────────────────────────────────────────────
+  const refreshList = useCallback(() => {
+    fetch("/api/chat")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.conversations) {
+          setConversations(data.conversations as ConversationSummary[]);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    refreshList();
+  }, [refreshList]);
 
-  const suggestedPrompts = SUGGESTED_PROMPTS[role] ?? [];
-
-  const handleSuggested = useCallback(
-    (prompt: string) => {
-      setInput(prompt);
-      setTimeout(() => {
-        sendMessage({ text: prompt });
-        setInput("");
-      }, 50);
+  // ─── Navigation handlers ───────────────────────────────────────────────────
+  const handleSelect = useCallback(
+    (id: string) => {
+      setThreadKey(id);
+      setConversationId(id);
+      router.push(`${basePath}/${id}`);
+      setMobileSidebarOpen(false);
     },
-    [sendMessage],
+    [router, basePath],
   );
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    sendMessage({ text: input });
-    setInput("");
-  }
+  const handleNewChat = useCallback(() => {
+    setThreadKey("new");
+    setConversationId(null);
+    router.push(basePath);
+    setMobileSidebarOpen(false);
+  }, [router, basePath]);
+
+  const handleConversationCreated = useCallback(
+    (id: string) => {
+      // Server created/confirmed a conversation. Update local state + URL
+      // WITHOUT triggering a navigation (which would remount the thread and
+      // lose the just-streamed messages). replaceState updates the URL for
+      // shareability/bookmarking without a Next.js route transition.
+      if (id !== conversationId) {
+        setConversationId(id);
+        window.history.replaceState(null, "", `${basePath}/${id}`);
+      }
+      refreshList();
+    },
+    [conversationId, basePath, refreshList],
+  );
+
+  // ─── Delete (optimistic) ───────────────────────────────────────────────────
+  const handleDelete = useCallback(
+    (id: string) => {
+      const removed = conversations.find((c) => c.id === id);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      // If we deleted the active conversation, fall back to a new chat.
+      if (id === conversationId) {
+        setThreadKey("new");
+        setConversationId(null);
+        router.push(basePath);
+      }
+      fetch(`/api/chat?conversationId=${id}`, { method: "DELETE" }).catch(
+        () => {
+          // Restore on failure
+          if (removed) {
+            setConversations((prev) =>
+              [...prev, removed].sort(
+                (a, b) =>
+                  new Date(b.updatedAt).getTime() -
+                  new Date(a.updatedAt).getTime(),
+              ),
+            );
+          }
+          refreshList();
+        },
+      );
+    },
+    [conversations, conversationId, router, basePath, refreshList],
+  );
+
+  // ─── Sidebar content (shared by desktop column + mobile sheet) ─────────────
+  const sidebarContent = (
+    <ConversationList
+      conversations={conversations}
+      activeId={activeId}
+      showNewChatPlaceholder={isNewChat}
+      onNewChat={handleNewChat}
+      onSelect={handleSelect}
+      onDelete={handleDelete}
+      className="px-2 pb-4"
+    />
+  );
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col space-y-4">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-6 text-primary" />
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            AI Health Assistant
-          </h1>
-          <Badge variant="secondary" className="text-xs">
-            {ROLE_BADGES[role]}
-          </Badge>
+    <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border bg-card">
+      {/* Desktop sidebar */}
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card/50 md:flex">
+        <div className="flex items-center gap-2 border-b border-border p-3">
+          <Sparkles className="size-5 text-primary" />
+          <span className="text-sm font-semibold text-foreground">Chats</span>
         </div>
-      </div>
+        {sidebarContent}
+      </aside>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto rounded-xl border border-border bg-card/50 p-4">
-        <MessageList
-          messages={messages}
-          isLoading={isLoading}
-          error={error}
-          onConfirm={() => sendMessage({ text: "Yes, please proceed." })}
-          onCancel={() => sendMessage({ text: "No, cancel." })}
-          bubbleMaxWidth="max-w-[80%]"
-          emptyState={
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageSquare className="size-10 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                Ask me anything about your health records.
-              </p>
+      {/* Main column */}
+      <div className="flex flex-1 flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 border-b border-border p-3">
+          <div className="flex items-center gap-2">
+            {/* Mobile sidebar trigger */}
+            <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+              <SheetTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="md:hidden"
+                    aria-label="Open conversation list"
+                  />
+                }
+              >
+                <Menu className="size-4" />
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-0">
+                <SheetHeader className="flex flex-row items-center gap-2 border-b border-border p-3">
+                  <Sparkles className="size-5 text-primary" />
+                  <SheetTitle>Chats</SheetTitle>
+                </SheetHeader>
+                {sidebarContent}
+              </SheetContent>
+            </Sheet>
+            <Sparkles className="size-5 text-primary md:hidden" />
+            <div>
+              <h1 className="text-sm font-semibold text-foreground">
+                AI Health Assistant
+              </h1>
+              <Badge variant="secondary" className="text-xs">
+                {ROLE_BADGES[role]}
+              </Badge>
             </div>
-          }
-        />
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Suggested prompts */}
-      {messages.length === 0 && suggestedPrompts.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {suggestedPrompts.map((p) => (
-            <Button
-              key={p}
-              onClick={() => handleSuggested(p)}
-              variant="outline"
-              size="sm"
-              className="rounded-full px-3 py-1.5 text-xs"
-            >
-              {p}
-            </Button>
-          ))}
+          </div>
         </div>
-      )}
 
-      {/* Input */}
-      <form id="chat-page-form" onSubmit={handleSubmit} className="flex gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Attach file"
-          title="File attachments are not supported yet"
-        >
-          <Paperclip className="size-4" />
-        </Button>
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message…"
-          className="flex-1"
-        />
-        <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-          <Send className="size-4" />
-        </Button>
-      </form>
-      <p className="text-center text-xs text-muted-foreground">
-        AI can perform actions on your behalf based on your role.
-      </p>
+        {/* Thread — keyed by threadKey so switching conversations resets state,
+            but creating a new conversation mid-thread doesn't remount (preserving
+            streamed messages). */}
+        <div className="flex-1 overflow-hidden">
+          <ChatThread
+            key={threadKey}
+            role={role}
+            userName={userName}
+            conversationId={activeId}
+            onConversationCreated={handleConversationCreated}
+          />
+        </div>
+      </div>
     </div>
   );
 }
