@@ -22,8 +22,19 @@ import { MessageList, getMessageText } from "@/components/chat/message-list";
 
 type ChatMetadata = { conversationId?: string };
 
-export function ChatPanel({ role }: { role: UserRole; userId: string }) {
-  const [open, setOpen] = useState(false);
+export function ChatPanel({
+  role,
+  open: externalOpen,
+  onOpenChange,
+}: {
+  role: UserRole;
+  userId: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -104,7 +115,7 @@ export function ChatPanel({ role }: { role: UserRole; userId: string }) {
     return (
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 size-14 rounded-full p-0 shadow-lg transition-transform hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 hidden size-14 rounded-full p-0 shadow-lg transition-transform hover:scale-105 lg:flex"
         aria-label="Open AI Assistant"
       >
         <Sparkles className="size-6" />

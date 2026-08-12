@@ -13,7 +13,10 @@
       "Exec(sed)",
       "Exec(head)",
       "Exec(cp)",
-      "Exec(git checkout)"
+      "Exec(git checkout)",
+      "Exec(npx vitest)",
+      "Exec(npx tsc)",
+      "Exec(npx next)"
     ]
   }
 }

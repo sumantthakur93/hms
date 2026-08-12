@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { siteConfig } from "@/lib/site-config";
 import { NAV_PER_ROLE } from "@/components/dashboard/nav-config";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { ChatButton } from "@/components/chat/chat-button";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
@@ -30,9 +29,10 @@ export default async function DashboardLayout({
       roleLabel={roleLabel}
       userName={session?.user?.name ?? roleLabel}
       userEmail={session?.user?.email ?? ""}
+      chatRole={session?.user?.role}
+      chatUserId={session?.user?.id}
     >
       {children}
-      {session?.user && <ChatButton role={role} userId={session.user.id} />}
     </DashboardShell>
   );
 }

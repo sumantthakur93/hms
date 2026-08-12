@@ -25,12 +25,15 @@ import {
   MoreHorizontal,
   Menu,
   X,
+  Sparkles,
 } from "@/components/ui/icon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ChatButton } from "@/components/chat/chat-button";
+import type { UserRole } from "@/types/next-auth";
 import type { NavItem } from "./nav-config";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -59,6 +62,8 @@ export function DashboardShell({
   roleLabel,
   userName,
   userEmail,
+  chatRole,
+  chatUserId,
   children,
 }: {
   navItems: NavItem[];
@@ -66,12 +71,15 @@ export function DashboardShell({
   roleLabel: string;
   userName: string;
   userEmail: string;
+  chatRole?: UserRole;
+  chatUserId?: string;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -89,9 +97,9 @@ export function DashboardShell({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Top 4 items for bottom tab bar, rest in "More" sheet
-  const topItems = navItems.slice(0, 4);
-  const moreItems = navItems.slice(4);
+  // Top 3 items + Chat tab for bottom tab bar, rest in "More" sheet
+  const topItems = navItems.slice(0, 3);
+  const moreItems = navItems.slice(3);
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -186,19 +194,20 @@ export function DashboardShell({
             {roleLabel} Dashboard
           </h2>
 
-          {/* Search (desktop) */}
-          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground md:flex">
-            <Search className="size-4" /> Search…
-          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {/* Search (desktop) */}
+            <div className="hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground md:flex">
+              <Search className="size-4" /> Search…
+            </div>
 
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="size-4" />
-            <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />
-          </Button>
+            {/* Notifications */}
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="size-4" />
+              <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />
+            </Button>
 
-          {/* User dropdown */}
-          <div className="relative" ref={userMenuRef}>
+            {/* User dropdown */}
+            <div className="relative" ref={userMenuRef}>
             <Button
               variant="ghost"
               onClick={() => setUserMenuOpen((o) => !o)}
@@ -235,6 +244,7 @@ export function DashboardShell({
                 </Link>
               </div>
             )}
+            </div>
           </div>
         </header>
 
@@ -242,6 +252,16 @@ export function DashboardShell({
           {children}
         </main>
       </div>
+
+      {/* Chat (floating button on desktop, tab-controlled on mobile) */}
+      {chatRole && chatUserId && (
+        <ChatButton
+          role={chatRole}
+          userId={chatUserId}
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+        />
+      )}
 
       {/* Mobile slide-out nav (full list) */}
       {mobileNavOpen && (
@@ -293,7 +313,7 @@ export function DashboardShell({
       )}
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border bg-card px-2 py-1.5 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around border-t border-border bg-card px-1 py-1.5 lg:hidden">
         {topItems.map((item) => {
           const Icon = ICONS[item.icon] ?? LayoutDashboard;
           const active = pathname === item.href;
@@ -302,12 +322,14 @@ export function DashboardShell({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-xs",
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-1 py-1 text-[11px] leading-tight",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon className="size-5" />
-              <span className="truncate">{item.label}</span>
+              <Icon className="size-5 shrink-0" />
+              <span className="w-full truncate text-center">
+                {item.shortLabel}
+              </span>
             </Link>
           );
         })}
@@ -316,12 +338,25 @@ export function DashboardShell({
           <Button
             variant="ghost"
             onClick={() => setMoreOpen(true)}
-            className="flex flex-1 flex-col items-center gap-0.5 py-1 text-xs text-muted-foreground h-auto"
+            className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[11px] leading-tight text-muted-foreground h-auto"
           >
-            <MoreHorizontal className="size-5" />
-            <span>More</span>
+            <MoreHorizontal className="size-5 shrink-0" />
+            <span className="w-full truncate text-center">More</span>
           </Button>
         )}
+
+        {/* Chat tab */}
+        <Button
+          variant="ghost"
+          onClick={() => setChatOpen(true)}
+          className={cn(
+            "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[11px] leading-tight h-auto",
+            chatOpen ? "text-primary" : "text-muted-foreground",
+          )}
+        >
+          <Sparkles className="size-5 shrink-0" />
+          <span className="w-full truncate text-center">Chat</span>
+        </Button>
       </nav>
 
       {/* Mobile "More" overflow sheet */}

@@ -9,6 +9,7 @@ import {
   Calendar,
   X,
   ArrowRight,
+  Stethoscope,
 } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -232,6 +233,19 @@ function RescheduleForm({
           <Button size="icon" variant="ghost" onClick={onCancel}>
             <X className="size-4" />
           </Button>
+        </div>
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Stethoscope className="size-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground">
+              {appointment.doctorName}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {appointment.departmentName}
+            </p>
+          </div>
         </div>
         {error && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">

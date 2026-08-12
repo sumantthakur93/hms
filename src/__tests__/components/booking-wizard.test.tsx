@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { createContext, useContext, type Context } from "react";
 
 vi.mock("@/actions/appointments", () => ({
   getDepartmentsForBooking: vi.fn(),
@@ -32,6 +33,52 @@ vi.mock("@/components/ui/popover", () => ({
     <div>{children}</div>
   ),
 }));
+
+vi.mock("@/components/ui/select", () => ({
+  Select: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value: string | null;
+    onValueChange: (v: string | null) => void;
+    items?: unknown;
+    children: React.ReactNode;
+  }) => (
+    <SelectCtx.Provider value={onValueChange as (v: string) => void}>
+      <div data-testid="select" data-value={value ?? ""}>
+        {children}
+      </div>
+    </SelectCtx.Provider>
+  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectValue: ({ placeholder }: { placeholder?: string }) => (
+    <span>{placeholder ?? ""}</span>
+  ),
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children: React.ReactNode;
+  }) => {
+    const onChange = useContext(SelectCtx);
+    return (
+      <button type="button" onClick={() => onChange(value)}>
+        {children}
+      </button>
+    );
+  },
+}));
+
+const SelectCtx: Context<(v: string) => void> = createContext<(v: string) => void>(
+  () => {},
+);
 
 import { BookingWizard } from "@/components/patient/booking-wizard";
 import {
@@ -95,52 +142,34 @@ const slots = [
   { startTime: "10:00", endTime: "10:30", available: true },
 ];
 
-// Helper: navigate to a specific step
-async function navigateToStep(targetStep: number) {
-  // Step 0: Load departments and select one
-  fireEvent.click(screen.getByText("Load departments"));
+// Helper: pick a value from a Select by clicking its SelectItem text.
+function pickSelectOption(itemText: string) {
+  fireEvent.click(screen.getByText(itemText));
+}
+
+// Helper: drive the form all the way to a submittable state.
+async function fillForm() {
+  // Departments auto-load on mount
   await waitFor(() =>
-    expect(screen.getByText("Cardiology")).toBeInTheDocument(),
+    expect(screen.getByText("Cardiology · ₹1000")).toBeInTheDocument(),
   );
-  fireEvent.click(screen.getByText("Cardiology"));
+  pickSelectOption("Cardiology · ₹1000");
   await waitFor(() => expect(mockGetDoctors).toHaveBeenCalledWith("dept1"));
 
-  if (targetStep === 0) return;
-
-  // Wait for Next button to be enabled, then click
-  await waitFor(() => {
-    const nextBtn = screen.getByText("Next").closest("button");
-    expect(nextBtn?.disabled).toBe(false);
-  });
-  fireEvent.click(screen.getByText("Next"));
+  // Pick doctor
   await waitFor(() =>
-    expect(screen.getByText("Choose a Doctor")).toBeInTheDocument(),
+    expect(screen.getByText("Dr. Smith · Cardiologist")).toBeInTheDocument(),
   );
+  pickSelectOption("Dr. Smith · Cardiologist");
 
-  if (targetStep === 1) return;
-
-  // Step 1: Select doctor
-  fireEvent.click(screen.getByText("Dr. Smith"));
-  await waitFor(() => {
-    const nextBtn = screen.getByText("Next").closest("button");
-    expect(nextBtn?.disabled).toBe(false);
-  });
-  fireEvent.click(screen.getByText("Next"));
-  await waitFor(() =>
-    expect(screen.getByText("Pick a Date & Time")).toBeInTheDocument(),
-  );
-
-  if (targetStep === 2) return;
-
-  // Step 2: Select date and slot
+  // Pick date
   fireEvent.click(screen.getByText("Pick a date"));
   fireEvent.click(screen.getByText("Pick Mar 15"));
+  await waitFor(() => expect(mockComputeSlots).toHaveBeenCalled());
   await waitFor(() => expect(screen.getByText("09:00")).toBeInTheDocument());
+
+  // Pick slot
   fireEvent.click(screen.getByText("09:00"));
-  fireEvent.click(screen.getByText("Next"));
-  await waitFor(() =>
-    expect(screen.getByText("Confirm Your Appointment")).toBeInTheDocument(),
-  );
 }
 
 describe("BookingWizard", () => {
@@ -155,63 +184,55 @@ describe("BookingWizard", () => {
     } as any);
   });
 
-  it("renders step 1 with load button", () => {
+  it("auto-loads departments on mount", async () => {
     render(<BookingWizard />);
-    expect(screen.getByText("Choose a Department")).toBeInTheDocument();
-    expect(screen.getByText("Load departments")).toBeInTheDocument();
-  });
-
-  it("loads and displays departments", async () => {
-    render(<BookingWizard />);
-    fireEvent.click(screen.getByText("Load departments"));
     await waitFor(() => {
-      expect(screen.getByText("Cardiology")).toBeInTheDocument();
-      expect(screen.getByText("General Medicine")).toBeInTheDocument();
+      expect(screen.getByText("Cardiology · ₹1000")).toBeInTheDocument();
+      expect(
+        screen.getByText("General Medicine · ₹500"),
+      ).toBeInTheDocument();
     });
   });
 
-  it("selects department and navigates to doctor step", async () => {
+  it("loads doctors when a department is selected", async () => {
     render(<BookingWizard />);
-    await navigateToStep(1);
-    expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("Cardiology · ₹1000")).toBeInTheDocument(),
+    );
+    pickSelectOption("Cardiology · ₹1000");
+    await waitFor(() => expect(mockGetDoctors).toHaveBeenCalledWith("dept1"));
+    await waitFor(() =>
+      expect(screen.getByText("Dr. Smith · Cardiologist")).toBeInTheDocument(),
+    );
   });
 
-  it("navigates back from doctor to department", async () => {
+  it("loads slots when doctor + date are selected", async () => {
     render(<BookingWizard />);
-    await navigateToStep(1);
-    fireEvent.click(screen.getByText("Back"));
-    await waitFor(() => {
-      expect(screen.getByText("Choose a Department")).toBeInTheDocument();
-    });
-  });
-
-  it("selects doctor and navigates to date & slot step", async () => {
-    render(<BookingWizard />);
-    await navigateToStep(2);
-    expect(screen.getByText("Pick a Date & Time")).toBeInTheDocument();
-  });
-
-  it("selects date, loads slots, and selects a slot", async () => {
-    render(<BookingWizard />);
-    await navigateToStep(2);
-    // Pick date
+    await waitFor(() =>
+      expect(screen.getByText("Cardiology · ₹1000")).toBeInTheDocument(),
+    );
+    pickSelectOption("Cardiology · ₹1000");
+    await waitFor(() =>
+      expect(screen.getByText("Dr. Smith · Cardiologist")).toBeInTheDocument(),
+    );
+    pickSelectOption("Dr. Smith · Cardiologist");
     fireEvent.click(screen.getByText("Pick a date"));
     fireEvent.click(screen.getByText("Pick Mar 15"));
-    await waitFor(() => {
-      expect(mockComputeSlots).toHaveBeenCalled();
-    });
-    await waitFor(() => {
-      expect(screen.getByText("09:00")).toBeInTheDocument();
-    });
-    // Disabled slot should not be clickable
+    await waitFor(() => expect(mockComputeSlots).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByText("09:00")).toBeInTheDocument());
+  });
+
+  it("disables unavailable slots", async () => {
+    render(<BookingWizard />);
+    await fillForm();
     const disabledSlot = screen.getByText("09:30").closest("button");
     expect(disabledSlot?.disabled).toBe(true);
   });
 
-  it("shows confirm summary with all details", async () => {
+  it("shows summary with all details once selected", async () => {
     render(<BookingWizard />);
-    await navigateToStep(3);
-    expect(screen.getByText("Confirm Your Appointment")).toBeInTheDocument();
+    await fillForm();
+    expect(screen.getByText("Appointment Summary")).toBeInTheDocument();
     expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
     expect(screen.getByText("Cardiology")).toBeInTheDocument();
     expect(screen.getByText("₹1000")).toBeInTheDocument();
@@ -219,8 +240,8 @@ describe("BookingWizard", () => {
 
   it("books appointment and shows success state", async () => {
     render(<BookingWizard />);
-    await navigateToStep(3);
-    fireEvent.click(screen.getByText("Confirm Booking"));
+    await fillForm();
+    fireEvent.click(screen.getByText("Book Appointment"));
     await waitFor(() => {
       expect(mockBook).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -233,21 +254,20 @@ describe("BookingWizard", () => {
     await waitFor(() => {
       expect(screen.getByText("Appointment Booked!")).toBeInTheDocument();
     });
-    // Check success details
     expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
     expect(screen.getByText("Cardiology")).toBeInTheDocument();
   });
 
-  it("resets wizard when Done is clicked", async () => {
+  it("resets form when Done is clicked", async () => {
     render(<BookingWizard />);
-    await navigateToStep(3);
-    fireEvent.click(screen.getByText("Confirm Booking"));
+    await fillForm();
+    fireEvent.click(screen.getByText("Book Appointment"));
     await waitFor(() =>
       expect(screen.getByText("Appointment Booked!")).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByText("Done"));
     await waitFor(() => {
-      expect(screen.getByText("Choose a Department")).toBeInTheDocument();
+      expect(screen.getByText("Appointment Summary")).toBeInTheDocument();
     });
   });
 
@@ -257,10 +277,19 @@ describe("BookingWizard", () => {
       error: "This slot is already booked. Please choose another time.",
     });
     render(<BookingWizard />);
-    await navigateToStep(3);
-    fireEvent.click(screen.getByText("Confirm Booking"));
+    await fillForm();
+    fireEvent.click(screen.getByText("Book Appointment"));
     await waitFor(() => {
       expect(screen.getByText(/already booked/)).toBeInTheDocument();
     });
+  });
+
+  it("disables submit until all fields are selected", async () => {
+    render(<BookingWizard />);
+    await waitFor(() =>
+      expect(screen.getByText("Cardiology · ₹1000")).toBeInTheDocument(),
+    );
+    const submit = screen.getByText("Book Appointment").closest("button");
+    expect(submit?.disabled).toBe(true);
   });
 });
