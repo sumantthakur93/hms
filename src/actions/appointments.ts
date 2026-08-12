@@ -109,6 +109,14 @@ export async function computeSlots(doctorId: string, date: string) {
   });
   const bookedStarts = new Set(existing.map((a) => a.startTime));
 
+  // Determine "now" in the server's local time to filter past slots.
+  // The date string is YYYY-MM-DD in the user's local timezone (sent from
+  // the client), so we compare against the current local date/time.
+  const now = new Date();
+  const todayStr = formatLocalDate(now);
+  const isToday = date === todayStr;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
   // Generate slots from each block
   const slots: Slot[] = [];
   for (const block of blocks) {
@@ -119,6 +127,9 @@ export async function computeSlots(doctorId: string, date: string) {
     const dur = block.slotDuration;
 
     for (let t = startMin; t + dur <= endMin; t += dur) {
+      // Skip past slots when booking for today
+      if (isToday && t <= nowMinutes) continue;
+
       const h = Math.floor(t / 60);
       const m = t % 60;
       const st = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -134,6 +145,18 @@ export async function computeSlots(doctorId: string, date: string) {
   }
 
   return { ok: true as const, slots };
+}
+
+/**
+ * Format a Date as YYYY-MM-DD using local date components.
+ * Mirrors the client-side formatLocalDate so slot-past-filtering
+ * compares the correct calendar day.
+ */
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 // ─── Book appointment ──────────────────────────────────────────────────────────
@@ -159,6 +182,21 @@ export async function bookAppointment(input: BookAppointmentInput) {
     patientId: inputPatientId,
   } = parsed.data;
   const dateObj = toDateUTC(date);
+
+  // Reject booking a slot that is already in the past
+  const now = new Date();
+  const todayStr = formatLocalDate(now);
+  if (date === todayStr) {
+    const [sh, sm] = startTime.split(":").map(Number);
+    const slotMinutes = sh * 60 + sm;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    if (slotMinutes <= nowMinutes) {
+      return {
+        ok: false as const,
+        error: "Cannot book a slot that has already passed.",
+      };
+    }
+  }
 
   // Determine patientId: patient uses their own, receptionist must specify
   let patientId: string;
@@ -267,6 +305,21 @@ export async function rescheduleAppointment(input: RescheduleInput) {
 
   const { appointmentId, newDate, newStartTime, newEndTime } = parsed.data;
   const newDateObj = toDateUTC(newDate);
+
+  // Reject rescheduling to a slot that is already in the past
+  const now = new Date();
+  const todayStr = formatLocalDate(now);
+  if (newDate === todayStr) {
+    const [sh, sm] = newStartTime.split(":").map(Number);
+    const slotMinutes = sh * 60 + sm;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    if (slotMinutes <= nowMinutes) {
+      return {
+        ok: false as const,
+        error: "Cannot reschedule to a slot that has already passed.",
+      };
+    }
+  }
 
   // Fetch the appointment to verify ownership + status
   const appointment = await prisma.appointment.findUnique({

@@ -176,6 +176,61 @@ describe("computeSlots", () => {
       expect(result.slots[1].available).toBe(true);
     }
   });
+
+  it("filters out past slots when the date is today", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.blockedDate.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.scheduleBlock.findMany).mockResolvedValue([
+      {
+        id: "b1",
+        doctorId: "doc1",
+        dayOfWeek: new Date().getDay(),
+        startTime: "00:00",
+        endTime: "23:59",
+        slotDuration: 60,
+      },
+    ] as any);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+
+    const todayStr = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const nowH = new Date().getHours();
+
+    const result = await computeSlots("doc1", todayStr);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // Every returned slot must start after the current hour
+      for (const slot of result.slots) {
+        const slotH = Number(slot.startTime.split(":")[0]);
+        expect(slotH).toBeGreaterThan(nowH);
+      }
+    }
+  });
+
+  it("keeps all slots when the date is a future day", async () => {
+    mockAuth.mockResolvedValue(patientSession());
+    vi.mocked(prisma.blockedDate.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.scheduleBlock.findMany).mockResolvedValue([
+      {
+        id: "b1",
+        doctorId: "doc1",
+        dayOfWeek: 5,
+        startTime: "09:00",
+        endTime: "11:00",
+        slotDuration: 30,
+      },
+    ] as any);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+
+    // 2024-03-15 is a Friday (day 5) — a fixed past date so "isToday" is false
+    const result = await computeSlots("doc1", "2024-03-15");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.slots).toHaveLength(4);
+    }
+  });
 });
 
 // ─── bookAppointment ───────────────────────────────────────────────────────────
